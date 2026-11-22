@@ -1,0 +1,79 @@
+---
+import Base from '../layouts/Base.astro';
+import { BASE } from '../lib/site';
+---
+
+<Base title="تأییدیه سفارش" desc="سفارش شما با موفقیت ثبت شد">
+  <div class="container">
+    <div id="receipt-box"></div>
+  </div>
+</Base>
+
+<script>
+  /* تأییدیه سفارش — اسکریپت باندل‌شده */
+  const base = document.querySelector('link[rel=icon]')!.getAttribute('href')!.replace('/favicon.svg', '');
+  const fa = (n: number) => new Intl.NumberFormat('fa-IR').format(n);
+  const code = new URLSearchParams(location.search).get('code');
+  const orders = JSON.parse(localStorage.getItem('ps_orders') || '[]');
+  const o = orders.find((x: any) => x.code === code);
+
+  if (!o) {
+    document.getElementById('receipt-box')!.innerHTML = `
+      <div class="cart-empty" style="padding-top:80px">
+        <div class="cart-empty__icon">🔎</div>
+        <p>سفارشی با این کد پیدا نشد.</p>
+        <a class="btn btn-primary" style="margin-top:14px" href="${base}/shop/">رفتن به فروشگاه</a>
+      </div>`;
+  } else {
+    const statusMap: Record<string, [string, string]> = {
+      pending: ['در انتظار پرداخت', 'status-pill--pending'],
+      processing: ['در حال پردازش', 'status-pill--processing'],
+      shipped: ['ارسال شده', 'status-pill--processing'],
+      delivered: ['تحویل شده', 'status-pill--paid'],
+      cancelled: ['لغو شده', 'status-pill--cancelled'],
+    };
+    const st = statusMap[o.status] || statusMap.pending;
+    const paySt = o.paymentStatus === 'paid' ? ['پرداخت شده ✓', 'status-pill--paid'] : ['در انتظار پرداخت', 'status-pill--pending'];
+    const steps: Record<string, string> = { pending: 'ثبت سفارش', processing: 'در حال پردازش', shipped: 'ارسال سفارش', delivered: 'تحویل به مشتری' };
+    const history = (o.history || []).map((h: any) => h.status);
+    const d = new Date(o.createdAt);
+
+    document.getElementById('receipt-box')!.innerHTML = `
+      <div class="receipt">
+        <div class="receipt__head">
+          <div class="pay-result__icon pay-result__icon--ok">✓</div>
+          <p class="pay-result__t" style="margin-bottom:4px">سفارش شما با موفقیت ثبت شد</p>
+          <p class="receipt__code">${o.code}</p>
+          <p class="product-card__cat">تاریخ ثبت: ${new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full', timeStyle: 'short' }).format(d)}</p>
+        </div>
+        <div class="receipt__body">
+          <div style="display:flex; gap:10px; justify-content:center; margin-bottom:20px; flex-wrap:wrap">
+            <span class="status-pill ${st[1]}">وضعیت سفارش: ${st[0]}</span>
+            <span class="status-pill ${paySt[1]}">وضعیت پرداخت: ${paySt[0]}</span>
+          </div>
+          <div class="timeline">
+            ${Object.keys(steps).map((s) => `
+              <div class="timeline__item ${history.includes(s) ? 'is-done' : ''}">${steps[s]}</div>`).join('')}
+          </div>
+          <p class="cart-summary__t" style="margin-top:8px">اقلام سفارش</p>
+          ${o.items.map((it: any) => `
+            <div class="sum-row"><span>${it.name} ${it.variant ? `(${it.variant})` : ''} × ${fa(it.qty)}</span><span>${fa(it.price * it.qty)} تومان</span></div>`).join('')}
+          <div class="sum-row"><span>جمع کالاها</span><span>${fa(o.subtotal)} تومان</span></div>
+          ${o.discount ? `<div class="sum-row" style="color:var(--c-success)"><span>تخفیف ${o.coupon ? '(' + o.coupon + ')' : ''}</span><span>−${fa(o.discount)} تومان</span></div>` : ''}
+          <div class="sum-row"><span>هزینه ارسال (${o.shippingMethod})</span><span>${o.shipping === 0 ? 'رایگان' : fa(o.shipping) + ' تومان'}</span></div>
+          <div class="sum-row is-total"><span>مبلغ پرداختی</span><span>${fa(o.total)} تومان</span></div>
+          <p class="cart-summary__t" style="margin-top:18px">اطلاعات ارسال</p>
+          <p style="font-size:13.5px; color:var(--c-text-soft); line-height:2.2">
+            ${o.customer.name} — ${o.customer.phone}<br>
+            ${o.customer.province}، ${o.customer.city}، ${o.customer.address}<br>
+            کد پستی: ${o.customer.postal} ${o.trackingCode ? '— کد رهگیری: <b dir="ltr">' + o.trackingCode + '</b>' : ''}
+          </p>
+          <p class="notice notice--info" style="margin-top:18px">📬 برای پیگیری وضعیت سفارش، به <a href="${base}/account/" style="color:var(--c-primary); font-weight:700">حساب کاربری</a> مراجعه کنید.</p>
+          <div style="display:flex; gap:10px; justify-content:center; margin-top:8px">
+            <a class="btn btn-primary" href="${base}/account/">مشاهده سفارش‌های من</a>
+            <a class="btn btn-default" href="${base}/shop/">ادامه خرید</a>
+          </div>
+        </div>
+      </div>`;
+  }
+</script>

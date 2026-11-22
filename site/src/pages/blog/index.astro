@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import { BASE, img, posts, dateFa } from '../../lib/site';
+---
+
+<Base title="مجله پارسی‌مزون" desc="مقالات راهنمای خرید، استایل و پوشاک زنانه">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">مجله پارسی‌مزون</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / مجله</p>
+    </div>
+  </section>
+  <div class="container section">
+    <div class="blog-grid">
+      {posts.map((b: any) => (
+        <a class="blog-card reveal" href={`${BASE}/blog/${b.slug}`}>
+          <img src={img(b.image)} alt={b.title} loading="lazy" width="800" height="533" />
+          <div class="blog-card__body">
+            <p class="blog-card__meta">{b.category} • {dateFa(b.date)}</p>
+            <h3 class="blog-card__title">{b.title}</h3>
+            <p class="product-card__cat" style="margin-top:8px">{b.excerpt}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+</Base>

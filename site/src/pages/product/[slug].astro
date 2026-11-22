@@ -1,0 +1,226 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { BASE, products, img, fa, money, catName, catSlug, brandName, salePercent, stars, relatedTo, dateFa, reviews } from '../../lib/site';
+
+export function getStaticPaths() {
+  return products.map((p: any) => ({ params: { slug: p.slug }, props: { p } }));
+}
+const { p } = Astro.props as any;
+const rel = relatedTo(p);
+const pReviews = reviews.filter((r: any) => r.productId === p.id && r.status === 'approved');
+const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
+---
+
+<Base title={p.name} desc={p.shortDesc}>
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t" style="font-size:20px">{p.name}</h1>
+      <p class="breadcrumb">
+        <a href={BASE + '/'}>خانه</a> / <a href={BASE + '/shop'}>فروشگاه</a> / <a href={`${BASE}/shop?cat=${catSlug(p.category)}`}>{catName(p.category)}</a> / {p.name}
+      </p>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="product-page">
+      <div>
+        <div class="gallery__main"><img id="gallery-main" src={img(p.images[0])} alt={p.name} width="600" height="800" /></div>
+        <div class="gallery__thumbs" id="gallery-thumbs">
+          {gallery.map((g: string, i: number) => (
+            <img src={img(g)} alt={p.name} class={i === 0 ? 'is-active' : ''} loading="lazy" />
+          ))}
+        </div>
+      </div>
+
+      <div class="p-info">
+        {p.oldPrice ? <span class="badge badge--sale" style="position:static;display:inline-block">٪{fa(salePercent(p))} تخفیف</span> : null}
+        <h2 class="p-info__title">{p.name}</h2>
+        <div class="p-info__meta">
+          <span class="stars">{stars(p.rating)}</span>
+          <span>({fa(p.reviewsCount)} دیدگاه)</span>
+          <span>کد کالا: {p.sku}</span>
+          <span>برند: {brandName(p.brand)}</span>
+        </div>
+        <p style="font-size:14.5px; line-height:2.2">{p.shortDesc}</p>
+
+        <div class="p-price">
+          <div class="p-price__num">
+            {p.oldPrice ? <del>{fa(p.oldPrice)}</del> : null}
+            <span id="p-price">{fa(p.price)}</span> تومان
+          </div>
+          <div style="text-align:left; font-size:12.5px; color:var(--c-text-soft)">
+            {p.stock > 0 ? `${fa(p.stock)} عدد موجود` : 'ناموجود'}
+          </div>
+        </div>
+
+        <div class="opt-group">
+          <p class="opt-group__t">رنگ: <span id="opt-color-lbl">{p.colors[0]}</span></p>
+          <div class="swatches" id="opt-colors">
+            {p.colors.map((c: string, i: number) => <button class={`swatch ${i === 0 ? 'is-active' : ''}`} data-v={c}>{c}</button>)}
+          </div>
+        </div>
+        <div class="opt-group">
+          <p class="opt-group__t">سایز: <span id="opt-size-lbl">{p.sizes[0]}</span></p>
+          <div class="swatches" id="opt-sizes">
+            {p.sizes.map((s: string, i: number) => <button class={`swatch ${i === 0 ? 'is-active' : ''}`} data-v={s}>{s}</button>)}
+          </div>
+        </div>
+
+        <div class="p-cta">
+          <div class="qty">
+            <button id="qty-minus">−</button>
+            <input id="qty-input" value="1" readonly aria-label="تعداد" />
+            <button id="qty-plus">+</button>
+          </div>
+          <button class="btn btn-primary" id="add-to-cart" data-pid={p.id} disabled={p.stock <= 0}>
+            {p.stock > 0 ? 'افزودن به سبد خرید' : 'ناموجود'}
+          </button>
+          <a class="btn btn-default" id="quick-pay" href={`${BASE}/checkout`}>خرید سریع</a>
+        </div>
+
+        <ul class="p-features">
+          <li>🚚 ارسال سریع به سراسر کشور</li>
+          <li>🔄 ۷ روز مهلت بازگشت کالا</li>
+          <li>📦 بسته‌بندی شیک و ایمن</li>
+          <li>💬 مشاوره سایز رایگان</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- تب‌ها -->
+    <div class="tabs">
+      <div class="tab-nav">
+        <button class="is-active" data-tab="desc">توضیحات</button>
+        <button data-tab="specs">مشخصات</button>
+        <button data-tab="reviews">دیدگاه‌ها ({fa(pReviews.length)})</button>
+      </div>
+      <div class="tab-panel is-active" data-panel="desc">
+        {p.desc.split('\n\n').map((para: string) => <p>{para}</p>)}
+      </div>
+      <div class="tab-panel" data-panel="specs">
+        <table class="spec-table">
+          {Object.entries(p.specs).map(([k, v]) => (
+            <tr><td>{k}</td><td>{v as string}</td></tr>
+          ))}
+          <tr><td>وزن</td><td>{fa(p.weight)} گرم</td></tr>
+          <tr><td>ابعاد بسته</td><td>{p.dims} سانتی‌متر</td></tr>
+        </table>
+      </div>
+      <div class="tab-panel" data-panel="reviews">
+        {pReviews.length ? pReviews.map((r: any) => (
+          <div class="review">
+            <div class="review__head">
+              <span class="review__name">{r.name}</span>
+              <span class="stars">{stars(r.rating)}</span>
+            </div>
+            <p class="product-card__cat">{dateFa(r.date)}</p>
+            <p style="font-size:14px; margin-top:6px">{r.text}</p>
+          </div>
+        )) : (
+          <p style="color:var(--c-text-soft)">هنوز دیدگاهی برای این محصول ثبت نشده است. اولین نفر باشید!</p>
+        )}
+        <form id="review-form" style="margin-top:22px; border-top:1px dashed var(--c-border); padding-top:20px">
+          <p class="filter-box__t">ثبت دیدگاه شما (دمو — بعد از تأیید نمایش داده می‌شود)</p>
+          <div class="form-grid">
+            <div class="field"><label>نام</label><input name="rname" required /></div>
+            <div class="field"><label>امتیاز</label>
+              <select name="rrating"><option value="5">۵ ستاره</option><option value="4">۴ ستاره</option><option value="3">۳ ستاره</option><option value="2">۲ ستاره</option><option value="1">۱ ستاره</option></select>
+            </div>
+            <div class="field field--full"><label>متن دیدگاه</label><textarea name="rtext" rows="3" required></textarea></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px">ارسال دیدگاه</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- مرتبط‌ها -->
+    {rel.length ? (
+      <section class="section">
+        <div class="section-head"><h2 class="section-title">محصولات مرتبط</h2></div>
+        <div class="product-grid">{rel.map((x: any) => <ProductCard p={x} />)}</div>
+      </section>
+    ) : null}
+  </div>
+</Base>
+
+<script is:inline>
+  (function () {
+    const base = document.querySelector('link[rel=icon]').getAttribute('href').replace('/favicon.svg', '');
+    const pid = document.getElementById('add-to-cart').dataset.pid;
+    const products = JSON.parse(localStorage.getItem('ps_products') || '[]');
+    const p = products.find((x) => x.id === pid) || JSON.parse(document.getElementById('ps-seed').textContent).products.find((x) => x.id === pid);
+    if (!p) return;
+    let color = p.colors[0], size = p.sizes[0], qty = 1;
+
+    /* گالری */
+    document.querySelectorAll('#gallery-thumbs img').forEach((t) => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('#gallery-thumbs img').forEach((x) => x.classList.remove('is-active'));
+        t.classList.add('is-active');
+        document.getElementById('gallery-main').src = t.src;
+      });
+    });
+
+    /* تنوع */
+    function pick(box, lblId, cb) {
+      box.querySelectorAll('.swatch').forEach((b) =>
+        b.addEventListener('click', () => {
+          box.querySelectorAll('.swatch').forEach((x) => x.classList.remove('is-active'));
+          b.classList.add('is-active');
+          document.getElementById(lblId).textContent = b.dataset.v;
+          cb(b.dataset.v);
+        })
+      );
+    }
+    let stockLeft = p.stock;
+    function currentVariant() {
+      const v = (p.variants || []).find((x) => x.color === color && x.size === size);
+      if (v) {
+        document.getElementById('p-price').textContent = new Intl.NumberFormat('fa-IR').format(v.price);
+        stockLeft = v.stock;
+      } else {
+        document.getElementById('p-price').textContent = new Intl.NumberFormat('fa-IR').format(p.price);
+        stockLeft = p.stock;
+      }
+      document.getElementById('qty-input').value = qty = Math.min(qty, Math.max(1, stockLeft));
+    }
+    pick(document.getElementById('opt-colors'), 'opt-color-lbl', (v) => { color = v; currentVariant(); });
+    pick(document.getElementById('opt-sizes'), 'opt-size-lbl', (v) => { size = v; currentVariant(); });
+
+    /* تعداد */
+    document.getElementById('qty-plus').addEventListener('click', () => { if (qty < stockLeft) { qty++; document.getElementById('qty-input').value = qty; } });
+    document.getElementById('qty-minus').addEventListener('click', () => { if (qty > 1) { qty--; document.getElementById('qty-input').value = qty; } });
+
+    /* افزودن به سبد */
+    document.getElementById('add-to-cart').addEventListener('click', () => {
+      window.__psAdd(p.id, `${color} / ${size}`, qty, p.name);
+    });
+
+    /* خرید سریع: ذخیره انتخاب فعلی و رفتن به تسویه */
+    document.getElementById('quick-pay').addEventListener('click', () => {
+      window.__psAdd(p.id, `${color} / ${size}`, qty, p.name);
+    });
+
+    /* تب‌ها */
+    document.querySelectorAll('.tab-nav button').forEach((b) =>
+      b.addEventListener('click', () => {
+        document.querySelectorAll('.tab-nav button').forEach((x) => x.classList.remove('is-active'));
+        document.querySelectorAll('.tab-panel').forEach((x) => x.classList.remove('is-active'));
+        b.classList.add('is-active');
+        document.querySelector(`[data-panel="${b.dataset.tab}"]`).classList.add('is-active');
+      })
+    );
+
+    /* ثبت دیدگاه دمو */
+    document.getElementById('review-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const reviews = JSON.parse(localStorage.getItem('ps_reviews') || '[]');
+      reviews.push({ id: 'r' + Date.now(), productId: p.id, name: fd.get('rname'), rating: Number(fd.get('rrating')), date: new Date().toISOString().slice(0, 10), text: fd.get('rtext'), status: 'pending' });
+      localStorage.setItem('ps_reviews', JSON.stringify(reviews));
+      this.querySelector('button').textContent = 'ثبت شد — پس از تأیید نمایش داده می‌شود ✓';
+      this.querySelectorAll('input,textarea').forEach((x) => (x.value = ''));
+    });
+  })();
+</script>

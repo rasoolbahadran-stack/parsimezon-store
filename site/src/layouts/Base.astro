@@ -1,0 +1,106 @@
+---
+import '../styles/global.css';
+import { BASE, settings } from '../lib/site';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import seed from '../../../shared/seed.json';
+
+const { title, desc } = Astro.props as any;
+const fullTitle = title ? `${title} | ${settings.siteName}` : `${settings.siteName} — ${settings.tagline}`;
+const canonical = Astro.url.pathname;
+const path = Astro.props?.path ?? canonical;
+---
+
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={desc || settings.tagline} />
+    <link rel="canonical" href={`https://rasoolbahadran-stack.github.io/parsimezon-store${canonical}`} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={desc || settings.tagline} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={settings.siteName} />
+    <link rel="icon" href={`${BASE}/favicon.svg`} type="image/svg+xml" />
+    <link rel="preload" href={`${BASE}/assets/fonts/Vazirmatn-Regular.woff2`} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={`${BASE}/assets/fonts/Vazirmatn-Bold.woff2`} as="font" type="font/woff2" crossorigin />
+  </head>
+  <body>
+    <div class="promo-bar">
+      <span set:html={settings.promoBar}></span>
+      <button class="promo-bar__close" id="promo-close" aria-label="بستن">✕</button>
+    </div>
+
+    <Header />
+
+    <slot />
+
+    <Footer />
+
+    <!-- سبد خرید کشویی -->
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+    <aside class="cart-drawer" id="cart-drawer" aria-label="سبد خرید">
+      <div class="cart-drawer__head">
+        <span>سبد خرید</span>
+        <button class="cart-drawer__close" id="cart-drawer-close" aria-label="بستن">✕</button>
+      </div>
+      <div class="cart-drawer__items" id="cart-drawer-items"></div>
+      <div class="cart-drawer__foot">
+        <p class="cart-line__v" id="cart-ship-note"></p>
+        <div class="cart-drawer__total">
+          <span>مجموع:</span>
+          <span id="cart-drawer-total">۰ تومان</span>
+        </div>
+        <a class="btn btn-primary btn-block" href={`${BASE}/cart`}>مشاهده سبد خرید و تسویه</a>
+      </div>
+    </aside>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-label="منوی موبایل">
+      <p class="footer-col__t" style="color:#333">دسته‌بندی‌ها</p>
+      {seed.categories.map((c: any) => <a href={`${BASE}/shop?cat=${c.slug}`} onClick="document.getElementById('mobile-nav').classList.remove('is-open')">{c.name}</a>)}
+      <p class="footer-col__t" style="color:#333">دسترسی سریع</p>
+      <a href={`${BASE}/about`}>درباره ما</a>
+      <a href={`${BASE}/contact`}>تماس با ما</a>
+      <a href={`${BASE}/blog`}>مجله پارسی‌مزون</a>
+      <a href={`${BASE}/account`}>حساب کاربری</a>
+    </nav>
+
+    <!-- بوت‌استرپ داده دمو + اسکریپت مشترک -->
+    <script type="application/json" id="ps-seed" set:html={JSON.stringify(seed)}></script>
+    <script>
+      import { bootShared, load, save } from '../lib/store';
+      /* بوت‌استرپ: پر کردن LocalStorage از seed (فقط بار اول) */
+      const seedEl = document.getElementById('ps-seed');
+      if (seedEl) {
+        const s = JSON.parse(seedEl.textContent || '{}');
+        const keys = { products: 'ps_products', categories: 'ps_categories', brands: 'ps_brands', coupons: 'ps_coupons', reviews: 'ps_reviews', orders: 'ps_orders', customers: 'ps_customers', settings: 'ps_settings' } as const;
+        Object.entries(keys).forEach(([k, ls]) => {
+          if (localStorage.getItem(ls) === null && (s as any)[k]) save(ls, (s as any)[k]);
+        });
+      }
+      bootShared((document.documentElement.dataset.base = document.querySelector('link[rel=icon]')!.getAttribute('href')!.replace('/favicon.svg', '')));
+      /* منوی موبایل */
+      document.getElementById('burger')?.addEventListener('click', () => {
+        document.getElementById('mobile-nav')?.classList.add('is-open');
+        (document.getElementById('drawer-backdrop') as HTMLElement).classList.add('is-open');
+      });
+      document.getElementById('mobile-nav')?.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).tagName === 'A') {
+          document.getElementById('mobile-nav')?.classList.remove('is-open');
+          document.getElementById('drawer-backdrop')?.classList.remove('is-open');
+        }
+      });
+    </script>
+    <script is:inline>
+      /* جست‌وجوی هدر */
+      document.getElementById('header-search-form')?.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const q = (document.getElementById('header-search-input') as HTMLInputElement)?.value?.trim();
+        const base = document.querySelector('link[rel=icon]')!.getAttribute('href')!.replace('/favicon.svg', '');
+        if (q) window.location.href = base + '/shop?q=' + encodeURIComponent(q);
+      });
+    </script>
+  </body>
+</html>

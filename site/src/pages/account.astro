@@ -1,0 +1,141 @@
+---
+import Base from '../layouts/Base.astro';
+import { BASE, fa, statusFa } from '../lib/site';
+---
+
+<Base title="حساب کاربری" desc="حساب کاربری پارسی‌مزون — سفارش‌ها و اطلاعات شما">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">حساب کاربری</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / حساب کاربری</p>
+    </div>
+  </section>
+
+  <div class="container account-page">
+    <!-- حالت مهمان: ورود/ثبت‌نام دمو -->
+    <div id="auth-box" style="max-width:440px; margin:40px auto; background:#fff; border:1px solid var(--c-border); padding:30px">
+      <h2 style="font-size:18px; margin-bottom:6px">ورود / ثبت‌نام (دمو)</h2>
+      <p class="product-card__cat" style="margin-bottom:18px">نسخه نمایشی: هر ایمیل یا شماره‌ای وارد کنید، حساب ساخته می‌شود و داده‌ها فقط در مرورگر شما ذخیره می‌شود.</p>
+      <form id="auth-form">
+        <div class="field" style="margin-bottom:12px"><label>ایمیل یا شماره موبایل</label><input name="uid" required placeholder="you@example.com یا 09xxxxxxxxx" /></div>
+        <div class="field" style="margin-bottom:18px"><label>نام (اختیاری برای ثبت‌نام)</label><input name="uname" /></div>
+        <button class="btn btn-primary btn-block">ورود</button>
+      </form>
+    </div>
+
+    <!-- حالت لاگین -->
+    <div id="account-box" style="display:none" class="account-layout">
+      <aside class="account-nav">
+        <p style="padding:16px 20px; border-bottom:1px solid var(--c-border)">
+          <b id="acc-name"></b><br><span class="product-card__cat" id="acc-uid"></span>
+        </p>
+        <a href="#orders" class="is-active" data-view="orders">📦 سفارش‌های من</a>
+        <a href="#profile" data-view="profile">👤 اطلاعات من</a>
+        <a href="#addresses" data-view="addresses">📍 آدرس‌ها</a>
+        <button class="cart-line__rm" id="logout" style="padding:14px 20px; font-size:14px">خروج از حساب</button>
+      </aside>
+      <div>
+        <div id="view-orders">
+          <h2 style="font-size:17px; margin-bottom:14px">سفارش‌های من</h2>
+          <div id="orders-list"></div>
+        </div>
+        <div id="view-profile" style="display:none">
+          <h2 style="font-size:17px; margin-bottom:14px">اطلاعات من</h2>
+          <div class="checkout-card" id="profile-card"></div>
+        </div>
+        <div id="view-addresses" style="display:none">
+          <h2 style="font-size:17px; margin-bottom:14px">آدرس‌ها</h2>
+          <div id="addresses-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<script>
+  (function () {
+    const base = document.querySelector('link[rel=icon]').getAttribute('href').replace('/favicon.svg', '');
+    const fa = (n) => new Intl.NumberFormat('fa-IR').format(n);
+    const user = JSON.parse(localStorage.getItem('ps_user') || 'null');
+
+    function paint() {
+      if (!user) { document.getElementById('auth-box').style.display = 'block'; return; }
+      document.getElementById('auth-box').style.display = 'none';
+      const box = document.getElementById('account-box');
+      box.style.display = 'grid';
+      document.getElementById('acc-name').textContent = user.name;
+      document.getElementById('acc-uid').textContent = user.email || user.phone;
+
+      const orders = JSON.parse(localStorage.getItem('ps_orders') || '[]').filter((o) => o.customer.phone === user.phone || o.customer.email === user.email);
+      const statusMap = { pending: ['در انتظار پرداخت', 'status-pill--pending'], processing: ['در حال پردازش', 'status-pill--processing'], shipped: ['ارسال شده', 'status-pill--processing'], delivered: ['تحویل شده', 'status-pill--paid'], cancelled: ['لغو شده', 'status-pill--cancelled'] };
+      document.getElementById('orders-list').innerHTML = orders.length ? orders.map((o) => `
+        <div class="order-card">
+          <div class="order-card__head">
+            <span class="order-card__code">${o.code}</span>
+            <span class="status-pill ${(statusMap[o.status] || statusMap.pending)[1]}">${(statusMap[o.status] || statusMap.pending)[0]}</span>
+          </div>
+          <p class="product-card__cat">${new Intl.DateTimeFormat('fa-IR', { dateStyle: 'long' }).format(new Date(o.createdAt))} — ${o.items.map((i) => i.name + ' × ' + fa(i.qty)).join(' ، ')}</p>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px">
+            <b>${fa(o.total)} تومان</b>
+            ${o.trackingCode ? `<span class="product-card__cat">کد رهگیری: <b dir="ltr">${o.trackingCode}</b></span>` : ''}
+          </div>
+          <div class="timeline">
+            ${['pending', 'processing', 'shipped', 'delivered'].map((s) => `
+              <div class="timeline__item ${(o.history || []).some((h) => h.status === s) ? 'is-done' : ''}">
+                ${({ pending: 'ثبت سفارش', processing: 'در حال پردازش', shipped: 'ارسال سفارش', delivered: 'تحویل' } as any)[s]}
+              </div>`).join('')}
+          </div>
+        </div>`).join('') : `
+        <div class="cart-empty">
+          <div class="cart-empty__icon">📦</div>
+          <p>هنوز سفارشی ثبت نکرده‌اید.</p>
+          <a class="btn btn-primary" style="margin-top:12px" href="${base}/shop">شروع خرید</a>
+        </div>`;
+
+      document.getElementById('profile-card').innerHTML = `
+        <div class="sum-row"><span>نام</span><span>${user.name}</span></div>
+        <div class="sum-row"><span>موبایل</span><span dir="ltr">${user.phone}</span></div>
+        <div class="sum-row"><span>ایمیل</span><span dir="ltr">${user.email || '—'}</span></div>
+        <div class="sum-row"><span>شهر</span><span>${user.city || '—'}</span></div>
+        <div class="sum-row"><span>تاریخ عضویت</span><span>${user.createdAt || '—'}</span></div>`;
+
+      document.getElementById('addresses-list').innerHTML = (user.addresses || []).length
+        ? user.addresses.map((a) => `<div class="checkout-card"><b>${a.title}</b><p style="font-size:13.5px; color:var(--c-text-soft); margin-top:4px">${a.address} — کد پستی ${a.postal}</p></div>`).join('')
+        : '<p class="product-card__cat">آدرسی ثبت نشده است. آدرس شما هنگام اولین خرید ثبت می‌شود.</p>';
+    }
+
+    document.getElementById('auth-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const fd = new FormData(this);
+      const uid = String(fd.get('uid')).trim();
+      const name = String(fd.get('uname') || '').trim() || 'کاربر پارسی‌مزون';
+      const customers = JSON.parse(localStorage.getItem('ps_customers') || '[]');
+      let cu = customers.find((c) => c.email === uid || c.phone === uid);
+      if (!cu) {
+        cu = { id: 'cu' + Date.now(), name, phone: /^\d/.test(uid) ? uid : '09' + Math.floor(100000000 + Math.random() * 900000000), email: uid.includes('@') ? uid : '', city: 'تهران', addresses: [], note: 'ثبت‌نام دمو', createdAt: new Date().toISOString().slice(0, 10) };
+        customers.push(cu);
+        localStorage.setItem('ps_customers', JSON.stringify(customers));
+      }
+      localStorage.setItem('ps_user', JSON.stringify(cu));
+      window.location.reload();
+    });
+
+    document.getElementById('logout').addEventListener('click', () => {
+      localStorage.removeItem('ps_user');
+      window.location.reload();
+    });
+
+    document.querySelectorAll('.account-nav a[data-view]').forEach((a) =>
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.account-nav a').forEach((x) => x.classList.remove('is-active'));
+        a.classList.add('is-active');
+        ['orders', 'profile', 'addresses'].forEach((v) => {
+          document.getElementById('view-' + v).style.display = v === a.dataset.view ? 'block' : 'none';
+        });
+      })
+    );
+
+    paint();
+  })();
+</script>

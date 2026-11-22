@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+import { BASE } from '../lib/site';
+---
+
+<Base title="صفحه پیدا نشد" desc="صفحه موردنظر یافت نشد">
+  <div class="container">
+    <div class="cart-empty" style="padding:90px 20px">
+      <div class="cart-empty__icon">🧭</div>
+      <h1 style="font-size:40px; font-weight:900; margin:10px 0">۴۰۴</h1>
+      <p>صفحه‌ای که دنبالش بودید پیدا نشد.</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:18px">
+        <a class="btn btn-primary" href={BASE + '/'}>صفحه اصلی</a>
+        <a class="btn btn-default" href={BASE + '/shop'}>فروشگاه</a>
+      </div>
+    </div>
+  </div>
+</Base>

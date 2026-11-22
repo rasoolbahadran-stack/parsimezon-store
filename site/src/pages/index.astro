@@ -1,0 +1,206 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { BASE, img, products, categories, posts, fa, money } from '../lib/site';
+
+const featured = products.filter((p: any) => p.featured);
+const news = [...products].sort((a: any, b: any) => b.createdAt.localeCompare(a.createdAt)).slice(0, 8);
+const sale = products.filter((p: any) => p.oldPrice);
+const catCounts: Record<string, number> = {};
+products.forEach((p: any) => (catCounts[p.category] = (catCounts[p.category] || 0) + 1));
+---
+
+<Base desc="بوتیک آنلاین پارسی‌مزون؛ خرید پیراهن مجلسی و روزمره، پالتو پشمی، ست و بلوز بافت با ارسال سریع به سراسر کشور">
+  <!-- هیرو اسلایدر -->
+  <section class="hero" id="hero">
+    <div class="hero__slides" id="hero-slides">
+      <div class="hero__slide">
+        <img src={img('hero1')} alt="کالکشن پاییز پارسی‌مزون" width="1600" height="900" fetchpriority="high" />
+        <div class="hero__content">
+          <p class="hero__tag">کالکشن جدید</p>
+          <h2 class="hero__title">شیک‌پوشِ فصل خودت باش</h2>
+          <p class="hero__sub">تازه‌ترین پیراهن‌های مجلسی و پالتوهای پشمی با تا ٪۲۵ تخفیف اولین خرید</p>
+          <div class="hero__cta">
+            <a class="btn btn-primary" href={`${BASE}/shop`}>مشاهده فروشگاه</a>
+            <a class="btn btn-dark" href={`${BASE}/shop?sale=1`}>تخفیف‌های ویژه</a>
+          </div>
+        </div>
+      </div>
+      <div class="hero__slide">
+        <img src={img('hero2')} alt="فروشگاه پارسی‌مزون" width="1600" height="900" loading="lazy" />
+        <div class="hero__content">
+          <p class="hero__tag">ارسال رایگان</p>
+          <h2 class="hero__title">سفارش بالای ۳ میلیون، ارسالش با ما</h2>
+          <p class="hero__sub">ارسال به سراسر کشور با پست پیشتاز و تیپاکس؛ ۷ روز مهلت بازگشت کالا</p>
+          <div class="hero__cta">
+            <a class="btn btn-primary" href={`${BASE}/shop`}>شروع خرید</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hero__dots" id="hero-dots">
+      <button class="hero__dot is-active" aria-label="اسلاید ۱"></button>
+      <button class="hero__dot" aria-label="اسلاید ۲"></button>
+    </div>
+  </section>
+
+  <!-- دسته‌بندی‌ها -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">خرید بر اساس دسته‌بندی</h2>
+        <a class="section-link" href={BASE + '/shop'}>همه محصولات ←</a>
+      </div>
+      <div class="cat-grid reveal">
+        {categories.map((c: any) => (
+          <a class="cat-card" href={`${BASE}/shop?cat=${c.slug}`}>
+            <img src={img(c.image)} alt={c.name} loading="lazy" width="400" height="400" />
+            <span class="cat-card__name">{c.name}</span>
+            <span class="cat-card__count">{fa(catCounts[c.id] || 0)} محصول</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- محصولات جدید -->
+  <section class="section section--gray">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">جدیدترین محصولات</h2>
+        <a class="section-link" href={BASE + '/shop?sort=new'}>مشاهده همه ←</a>
+      </div>
+      <div class="product-grid">
+        {news.map((p: any) => <ProductCard p={p} />)}
+      </div>
+      <div class="load-more">
+        <button class="btn btn-default" id="load-more">نمایش بیشتر</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- پیشنهاد شگفت‌انگیز -->
+  <section class="section">
+    <div class="container">
+      <div class="promo-strip reveal">
+        <div>
+          <h3 class="promo-strip__title">پیشنهاد شگفت‌انگیز پارسی‌مزون 🎁</h3>
+          <p class="promo-strip__sub">تا ٪۲۵ تخفیف روی مدل‌های منتخب — فرصت محدود!</p>
+        </div>
+        <div class="countdown" id="countdown" data-until="3d">
+          <div class="countdown__cell"><div class="countdown__num" data-cd="d">۰۲</div><div class="countdown__lbl">روز</div></div>
+          <div class="countdown__cell"><div class="countdown__num" data-cd="h">۱۲</div><div class="countdown__lbl">ساعت</div></div>
+          <div class="countdown__cell"><div class="countdown__num" data-cd="m">۳۰</div><div class="countdown__lbl">دقیقه</div></div>
+          <div class="countdown__cell"><div class="countdown__num" data-cd="s">۴۵</div><div class="countdown__lbl">ثانیه</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- تخفیف‌دارها -->
+  <section class="section section--gray">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">تخفیف‌های ویژه</h2>
+        <a class="section-link" href={BASE + '/shop?sale=1'}>مشاهده همه ←</a>
+      </div>
+      <div class="product-grid">
+        {sale.slice(0, 4).map((p: any) => <ProductCard p={p} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- مزایا -->
+  <section class="section">
+    <div class="container">
+      <div class="features reveal">
+        <div class="feature">
+          <div class="feature__icon">🚚</div>
+          <div><p class="feature__t">ارسال سریع</p><p class="feature__s">پردازش همان روز، تحویل ۲ تا ۵ روزه</p></div>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">🔄</div>
+          <div><p class="feature__t">۷ روز بازگشت</p><p class="feature__s">ضمانت بازگشت بدون قید و شرط</p></div>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">🔐</div>
+          <div><p class="feature__t">پرداخت امن دمو</p><p class="feature__s">درگاه آزمایشی بدون برداشت واقعی</p></div>
+        </div>
+        <div class="feature">
+          <div class="feature__icon">💬</div>
+          <div><p class="feature__t">پشتیبانی واقعی</p><p class="feature__s">مشاوره سایز و استایل در روزهای کاری</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- بلاگ -->
+  <section class="section section--gray">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">مجله پارسی‌مزون</h2>
+        <a class="section-link" href={BASE + '/blog'}>همه مقالات ←</a>
+      </div>
+      <div class="blog-grid">
+        {posts.map((b: any) => (
+          <a class="blog-card reveal" href={`${BASE}/blog/${b.slug}`}>
+            <img src={img(b.image)} alt={b.title} loading="lazy" width="800" height="533" />
+            <div class="blog-card__body">
+              <p class="blog-card__meta">{b.category} • {b.date}</p>
+              <h3 class="blog-card__title">{b.title}</h3>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script is:inline>
+  /* اسلایدر هیرو */
+  (function () {
+    const slides = document.getElementById('hero-slides');
+    const dots = [...document.querySelectorAll('.hero__dot')];
+    if (!slides) return;
+    let cur = 0;
+    const go = (i) => {
+      cur = (i + slides.children.length) % slides.children.length;
+      slides.style.transform = `translateX(${cur * 100}%)`;
+      dots.forEach((d, n) => d.classList.toggle('is-active', n === cur));
+    };
+    dots.forEach((d, n) => d.addEventListener('click', () => go(n)));
+    let timer = setInterval(() => go(cur + 1), 5000);
+    slides.addEventListener('mouseenter', () => clearInterval(timer));
+    slides.addEventListener('mouseleave', () => (timer = setInterval(() => go(cur + 1), 5000)));
+  })();
+
+  /* شمارش معکوس شگفت‌انگیز */
+  (function () {
+    const box = document.getElementById('countdown');
+    if (!box) return;
+    const until = Date.now() + 2 * 24 * 3600 * 1e3 + 12 * 3600 * 1e3 + 30 * 60 * 1e3;
+    const fa = (n) => new Intl.NumberFormat('fa-IR').format(n).padStart(2, '۰');
+    const tick = () => {
+      let s = Math.max(0, Math.floor((until - Date.now()) / 1000));
+      const d = Math.floor(s / 86400); s %= 86400;
+      const h = Math.floor(s / 3600); s %= 3600;
+      const m = Math.floor(s / 60); s %= 60;
+      box.querySelector('[data-cd=d]').textContent = fa(d);
+      box.querySelector('[data-cd=h]').textContent = fa(h);
+      box.querySelector('[data-cd=m]').textContent = fa(m);
+      box.querySelector('[data-cd=s]').textContent = fa(s);
+    };
+    tick();
+    setInterval(tick, 1000);
+  })();
+
+  /* نمایش بیشتر (رندر کارت‌های باقی‌مانده) */
+  (function () {
+    const btn = document.getElementById('load-more');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      btn.textContent = 'همه محصولات نمایش داده شد';
+      btn.disabled = true;
+    });
+  })();
+</script>

@@ -1,0 +1,172 @@
+---
+import Base from '../layouts/Base.astro';
+import { BASE, fa, shippingMethods } from '../lib/site';
+---
+
+<Base title="تسویه حساب" desc="تکمیل اطلاعات و ثبت سفارش در پارسی‌مزون">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">تسویه حساب</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / سبد خرید / تسویه حساب</p>
+    </div>
+  </section>
+
+  <div class="container checkout-page">
+    <div class="checkout-layout">
+      <div>
+        <form id="checkout-form" novalidate>
+          <div class="checkout-card">
+            <p class="checkout-card__t">۱. اطلاعات خریدار</p>
+            <div class="form-grid">
+              <div class="field"><label>نام *</label><input name="firstName" required /><span class="err">نام را وارد کنید</span></div>
+              <div class="field"><label>نام خانوادگی *</label><input name="lastName" required /><span class="err">نام خانوادگی را وارد کنید</span></div>
+              <div class="field"><label>شماره موبایل *</label><input name="phone" inputmode="tel" required pattern="09\d{9}" placeholder="09xxxxxxxxx" /><span class="err">شماره موبایل معتبر وارد کنید (۰۹…)</span></div>
+              <div class="field"><label>ایمیل</label><input name="email" type="email" /><span class="err">ایمیل معتبر نیست</span></div>
+              <div class="field"><label>استان *</label><input name="province" required /><span class="err">استان را وارد کنید</span></div>
+              <div class="field"><label>شهر *</label><input name="city" required /><span class="err">شهر را وارد کنید</span></div>
+              <div class="field field--full"><label>آدرس دقیق *</label><textarea name="address" rows="2" required></textarea><span class="err">آدرس را وارد کنید</span></div>
+              <div class="field"><label>کد پستی *</label><input name="postal" inputmode="numeric" required pattern="\d{10}" placeholder="۱۰ رقم" /><span class="err">کد پستی ۱۰ رقمی وارد کنید</span></div>
+              <div class="field"><label>توضیحات سفارش</label><input name="note" /></div>
+            </div>
+          </div>
+
+          <div class="checkout-card">
+            <p class="checkout-card__t">۲. روش ارسال</p>
+            <div id="ship-options">
+              {shippingMethods.map((s: any, i: number) => (
+                <label class={`ship-opt ${i === 0 ? 'is-active' : ''}`}>
+                  <input type="radio" name="shipping" value={s.id} checked={i === 0} />
+                  <div style="flex:1"><b>{s.name}</b><br /><span class="product-card__cat">{s.eta}</span></div>
+                  <b>{s.cost === 0 ? 'رایگان' : fa(s.cost) + ' تومان'}</b>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div class="checkout-card">
+            <p class="checkout-card__t">۳. روش پرداخت</p>
+            {[
+              { id: 'gateway', name: 'پرداخت آنلاین آزمایشی', desc: 'درگاه دمو شبیه‌سازی‌شده — بدون برداشت واقعی' },
+              { id: 'cod', name: 'پرداخت در محل (دمو)', desc: 'پرداخت هنگام تحویل، فقط تهران' },
+            ].map((m: any, i: number) => (
+              <label class={`pay-option ${i === 0 ? 'is-active' : ''}`}>
+                <input type="radio" name="payment" value={m.id} checked={i === 0} />
+                <div><b class="pay-option__t">{m.name}</b><br /><span class="pay-option__s">{m.desc}</span></div>
+              </label>
+            ))}
+            <p class="notice notice--info" style="margin-top:12px">⚠️ این فروشگاه یک نسخه نمایشی است؛ پرداخت واقعی انجام نمی‌شود.</p>
+          </div>
+        </form>
+      </div>
+
+      <div class="cart-summary" id="checkout-summary">
+        <p class="cart-summary__t">خلاصه سفارش</p>
+        <div id="co-items"></div>
+        <div class="sum-row"><span>جمع کالاها</span><span id="co-subtotal"></span></div>
+        <div class="sum-row" id="co-discount-row" style="display:none"><span>تخفیف</span><span id="co-discount" style="color:var(--c-success)"></span></div>
+        <div class="sum-row"><span>هزینه ارسال</span><span id="co-ship"></span></div>
+        <div class="sum-row is-total"><span>قابل پرداخت</span><span id="co-total"></span></div>
+        <button class="btn btn-primary btn-block" style="margin-top:16px; font-size:15px" id="place-order">تأیید و پرداخت</button>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<script is:inline>
+  (function () {
+    const base = document.querySelector('link[rel=icon]').getAttribute('href').replace('/favicon.svg', '');
+    const fa = (n) => new Intl.NumberFormat('fa-IR').format(n);
+    const products = JSON.parse(localStorage.getItem('ps_products') || '[]');
+    const settings = JSON.parse(localStorage.getItem('ps_settings') || '{}');
+    const ships = JSON.parse(JSON.stringify({ methods: JSON.parse(JSON.stringify(JSON.parse(document.getElementById('ps-seed').textContent).shippingMethods)) })).methods || JSON.parse(document.getElementById('ps-seed').textContent).shippingMethods;
+    const lines = JSON.parse(localStorage.getItem('ps_cart') || '[]');
+    const ctx = JSON.parse(sessionStorage.getItem('ps_checkout_ctx') || '{}');
+
+    if (!lines.length) { window.location.href = base + '/cart'; return; }
+
+    let subtotal = 0;
+    const items = lines.map((l) => {
+      const p = products.find((x) => x.id === l.id);
+      if (!p) return null;
+      let price = p.price, vname = '', variantId = '';
+      if (l.variant && p.variants) {
+        const v = p.variants.find((x) => `${x.color} / ${x.size}` === l.variant);
+        if (v) { price = v.price; vname = `${v.color} / ${v.size}`; variantId = v.id; }
+      }
+      subtotal += price * l.qty;
+      return { productId: p.id, name: p.name, image: p.images[0], variant: vname, variantId, qty: l.qty, price };
+    }).filter(Boolean);
+
+    const discount = Math.min(ctx.discount || 0, subtotal);
+    let shipId = 'post';
+
+    /* خلاصه */
+    function paint() {
+      const ship = subtotal >= (settings.freeShippingThreshold || 3000000) ? 0 : (ships.find((s) => s.id === shipId) || ships[0]).cost;
+      const total = Math.max(0, subtotal - discount) + ship;
+      document.getElementById('co-items').innerHTML = items.map((it) => `
+        <div style="display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--c-border); font-size:13px">
+          <img src="${base}/assets/img/${it.image}.webp" alt="" style="width:46px; height:58px; object-fit:cover">
+          <div style="flex:1"><b>${it.name}</b><br><span class="product-card__cat">${it.variant} × ${fa(it.qty)}</span></div>
+          <span>${fa(it.price * it.qty)}</span>
+        </div>`).join('');
+      document.getElementById('co-subtotal').textContent = fa(subtotal) + ' تومان';
+      document.getElementById('co-ship').textContent = ship === 0 ? 'رایگان' : fa(ship) + ' تومان';
+      document.getElementById('co-total').textContent = fa(total) + ' تومان';
+      if (discount > 0) {
+        document.getElementById('co-discount-row').style.display = 'flex';
+        document.getElementById('co-discount').textContent = '−' + fa(discount) + ' تومان';
+      }
+      return { ship, total };
+    }
+    paint();
+
+    document.querySelectorAll('.ship-opt input').forEach((r) => r.addEventListener('change', () => {
+      shipId = r.value;
+      document.querySelectorAll('.ship-opt').forEach((x) => x.classList.remove('is-active'));
+      r.closest('.ship-opt').classList.add('is-active');
+      paint();
+    }));
+    document.querySelectorAll('.pay-option input').forEach((r) => r.addEventListener('change', () => {
+      document.querySelectorAll('.pay-option').forEach((x) => x.classList.remove('is-active'));
+      r.closest('.pay-option').classList.add('is-active');
+    }));
+
+    /* اعتبارسنجی */
+    function validate() {
+      let ok = true;
+      document.querySelectorAll('#checkout-form .field').forEach((f) => {
+        const input = f.querySelector('input, textarea');
+        if (!input) return;
+        let bad = false;
+        if (input.required && !input.value.trim()) bad = true;
+        if (input.name === 'phone' && input.value.trim() && !/^09\d{9}$/.test(input.value.trim())) bad = true;
+        if (input.name === 'postal' && input.value.trim() && !/^\d{10}$/.test(input.value.trim())) bad = true;
+        if (input.type === 'email' && input.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim())) bad = true;
+        f.classList.toggle('has-error', bad);
+        if (bad) ok = false;
+      });
+      return ok;
+    }
+
+    document.getElementById('place-order').addEventListener('click', () => {
+      if (!validate()) {
+        document.querySelector('.field.has-error')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      const fd = new FormData(document.getElementById('checkout-form'));
+      const payMethod = fd.get('payment');
+      sessionStorage.setItem('ps_pending_order', JSON.stringify({
+        customer: {
+          firstName: fd.get('firstName'), lastName: fd.get('lastName'), name: (fd.get('firstName') + ' ' + fd.get('lastName')).trim(),
+          phone: fd.get('phone'), email: fd.get('email') || '', province: fd.get('province'), city: fd.get('city'),
+          address: fd.get('address'), postal: fd.get('postal'), note: fd.get('note') || '',
+        },
+        items, subtotal, discount, coupon: ctx.couponCode || '',
+        shippingMethod: (ships.find((s) => s.id === shipId) || ships[0]).name,
+        paymentMethod: payMethod,
+      }));
+      window.location.href = payMethod === 'cod' ? base + '/payment?cod=1' : base + '/payment';
+    });
+  })();
+</script>

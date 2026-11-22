@@ -1,0 +1,138 @@
+---
+import Base from '../layouts/Base.astro';
+import { BASE, money } from '../lib/site';
+---
+
+<Base title="سبد خرید" desc="سبد خرید پارسی‌مزون">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">سبد خرید</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / سبد خرید</p>
+    </div>
+  </section>
+
+  <div class="container cart-page">
+    <div id="cart-page-body"></div>
+  </div>
+</Base>
+
+<script is:inline>
+  (function () {
+    const base = document.querySelector('link[rel=icon]').getAttribute('href').replace('/favicon.svg', '');
+    const fa = (n) => new Intl.NumberFormat('fa-IR').format(n);
+    const body = document.getElementById('cart-page-body');
+
+    function render() {
+      const products = JSON.parse(localStorage.getItem('ps_products') || '[]');
+      const settings = JSON.parse(localStorage.getItem('ps_settings') || '{}');
+      const lines = JSON.parse(localStorage.getItem('ps_cart') || '[]');
+      if (!lines.length) {
+        body.innerHTML = `
+          <div class="cart-empty">
+            <div class="cart-empty__icon">🛍️</div>
+            <p style="margin-bottom:16px">سبد خرید شما خالی است.</p>
+            <a class="btn btn-primary" href="${base}/shop">رفتن به فروشگاه</a>
+          </div>`;
+        return;
+      }
+      let subtotal = 0;
+      const rows = lines.map((l, i) => {
+        const p = products.find((x) => x.id === l.id);
+        if (!p) return '';
+        let price = p.price, vname = '';
+        if (l.variant && p.variants) {
+          const v = p.variants.find((x) => `${x.color} / ${x.size}` === l.variant);
+          if (v) { price = v.price; vname = `${v.color} / ${v.size}`; }
+        }
+        const sum = price * l.qty;
+        subtotal += sum;
+        return `
+        <tr>
+          <td><img src="${base}/assets/img/${p.images[0]}.webp" alt="${p.name}"></td>
+          <td><b>${p.name}</b><br><span class="product-card__cat">${vname}</span></td>
+          <td>${fa(price)} تومان</td>
+          <td>
+            <span class="qty">
+              <button data-dec="${i}">−</button><input value="${l.qty}" readonly><button data-inc="${i}">+</button>
+            </span>
+          </td>
+          <td><b>${fa(sum)} تومان</b></td>
+          <td><button class="cart-line__rm" data-rm="${i}">حذف</button></td>
+        </tr>`;
+      }).join('');
+
+      const freeOver = settings.freeShippingThreshold || 3000000;
+      body.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 380px; gap:24px; align-items:start" id="cart-grid">
+          <div style="overflow-x:auto">
+            <table class="table">
+              <thead><tr><th>تصویر</th><th>محصول</th><th>قیمت واحد</th><th>تعداد</th><th>جمع</th><th></th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+          <div class="cart-summary">
+            <p class="cart-summary__t">خلاصه سفارش</p>
+            <div class="sum-row"><span>جمع کالاها</span><span>${fa(subtotal)} تومان</span></div>
+            <div class="sum-row" id="sum-discount" style="display:none; color:var(--c-success)"><span>تخفیف</span><span id="discount-val"></span></div>
+            <div class="sum-row" id="sum-ship"><span>هزینه ارسال</span><span>${subtotal >= freeOver ? 'رایگان' : fa(89000) + ' تومان'}</span></div>
+            <div class="coupon-row">
+              <input id="coupon-input" placeholder="کد تخفیف (مثلاً WELCOME10)">
+              <button class="btn btn-default btn-sm" id="coupon-btn">اعمال</button>
+            </div>
+            <p class="cart-line__v" id="coupon-msg"></p>
+            <div class="sum-row is-total"><span>قابل پرداخت</span><span id="grand-total"></span></div>
+            <a class="btn btn-primary btn-block" style="margin-top:14px" href="${base}/checkout" id="go-checkout">ادامه فرایند خرید</a>
+            <a class="btn btn-default btn-block" style="margin-top:8px" href="${base}/shop">ادامه خرید</a>
+          </div>
+        </div>`;
+
+      let discount = 0, couponCode = '';
+      function totals() {
+        const ship = subtotal >= freeOver ? 0 : 89000;
+        return { ship, total: Math.max(0, subtotal - discount) + ship };
+      }
+      function paint() {
+        const { ship, total } = totals();
+        document.getElementById('grand-total').textContent = fa(total) + ' تومان';
+        document.getElementById('sum-ship').lastElementChild.textContent = ship === 0 ? 'رایگان' : fa(ship) + ' تومان';
+        const dRow = document.getElementById('sum-discount');
+        if (discount > 0) {
+          dRow.style.display = 'flex';
+          document.getElementById('discount-val').textContent = '−' + fa(discount) + ' تومان';
+        } else dRow.style.display = 'none';
+      }
+      paint();
+
+      document.getElementById('coupon-btn').addEventListener('click', () => {
+        const code = document.getElementById('coupon-input').value.trim().toUpperCase();
+        const coupons = JSON.parse(localStorage.getItem('ps_coupons') || '[]');
+        const c = coupons.find((x) => x.code.toUpperCase() === code && x.active);
+        const msg = document.getElementById('coupon-msg');
+        if (!c) { msg.textContent = 'کد تخفیف نامعتبر است'; msg.style.color = 'var(--c-primary)'; return; }
+        if (subtotal < (c.minOrder || 0)) { msg.textContent = 'حداقل مبلغ سفارش: ' + fa(c.minOrder) + ' تومان'; msg.style.color = 'var(--c-primary)'; return; }
+        discount = c.type === 'percent' ? Math.round(subtotal * c.amount / 100) : c.amount;
+        couponCode = c.code;
+        msg.textContent = 'کد تخفیف «' + c.code + '» اعمال شد ✓';
+        msg.style.color = 'var(--c-success)';
+        paint();
+      });
+
+      document.querySelectorAll('[data-inc]').forEach((b) => b.addEventListener('click', () => { lines[b.dataset.inc].qty++; savePaint(); }));
+      document.querySelectorAll('[data-dec]').forEach((b) => b.addEventListener('click', () => { if (lines[b.dataset.dec].qty > 1) lines[b.dataset.dec].qty--; else lines.splice(b.dataset.dec, 1); savePaint(); }));
+      document.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => { lines.splice(b.dataset.rm, 1); savePaint(); }));
+
+      function savePaint() {
+        localStorage.setItem('ps_cart', JSON.stringify(lines));
+        window.__psRefreshBadge && window.__psRefreshBadge();
+        render();
+      }
+      /* درخشش عدد بج از store: از استور استفاده می‌کنیم */
+      window.__psRefreshBadge = window.__psRefreshBadge || (() => {});
+      /* پاس داده‌ها به تسویه */
+      document.getElementById('go-checkout').addEventListener('click', () => {
+        sessionStorage.setItem('ps_checkout_ctx', JSON.stringify({ discount, couponCode }));
+      });
+    }
+    render();
+  })();
+</script>

@@ -1,0 +1,36 @@
+---
+import { BASE, img, fa, money, salePercent, stars, catName } from '../lib/site';
+const { p } = Astro.props as any;
+---
+
+<article class="product-card reveal">
+  <div class="product-card__media">
+    {p.oldPrice ? <span class="badge badge--sale">٪{fa(salePercent(p))} تخفیف</span> : p.featured ? <span class="badge badge--new">جدید</span> : null}
+    {p.stock <= 0 ? <span class="badge badge--out">ناموجود</span> : null}
+    <a href={`${BASE}/product/${p.slug}`} aria-label={p.name}>
+      <img src={img(p.images[0])} alt={p.name} loading="lazy" width="600" height="800" />
+    </a>
+    <div class="product-card__actions">
+      {p.stock > 0 ? (
+        <button class="add-btn" data-add={p.id}>افزودن به سبد</button>
+      ) : (
+        <button class="add-btn" disabled>ناموجود</button>
+      )}
+    </div>
+  </div>
+  <div class="product-card__body">
+    <span class="product-card__cat">{catName(p.category)}</span>
+    <a href={`${BASE}/product/${p.slug}`}><h3 class="product-card__title">{p.name}</h3></a>
+    <div class="price">
+      <span class="price__current">
+        {p.oldPrice ? <del>{fa(p.oldPrice)}</del> : null}
+        {fa(p.price)}
+      </span>
+      <span class="price__unit">تومان</span>
+    </div>
+    <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center">
+      <span class="stars">{stars(p.rating)}</span>
+      <span class="product-card__cat">({fa(p.reviewsCount)} نظر)</span>
+    </div>
+  </div>
+</article>

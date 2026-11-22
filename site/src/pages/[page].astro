@@ -1,0 +1,76 @@
+---
+import Base from '../layouts/Base.astro';
+import { BASE, staticPages, img, fa } from '../lib/site';
+
+export function getStaticPaths() {
+  return staticPages.map((pg: any) => ({ params: { page: pg.slug }, props: { pg } }));
+}
+const { pg } = Astro.props as any;
+const isContact = pg.slug === 'contact';
+const isFaq = pg.slug === 'faq';
+const blocks = pg.body.split('\n\n');
+---
+
+<Base title={pg.title} desc={`${pg.title} — پارسی‌مزون`}>
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">{pg.title}</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / {pg.title}</p>
+    </div>
+  </section>
+
+  <div class="container" style="max-width:860px; padding:34px 20px">
+    {pg.image ? <img src={img(pg.image)} alt={pg.title} style="width:100%; aspect-ratio:4/3; object-fit:cover; margin-bottom:24px" width="800" height="600" /> : null}
+
+    {isContact ? (
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start" id="contact-grid">
+        <div class="checkout-card">
+          <p class="checkout-card__t">راه‌های ارتباط</p>
+          <div class="sum-row"><span>تلفن</span><span dir="ltr">۰۲۱-۹۱۰۰۲۲۳۳</span></div>
+          <div class="sum-row"><span>ایمیل</span><span dir="ltr">info@parsimezon-demo.ir</span></div>
+          <div class="sum-row"><span>ساعات کاری</span><span>شنبه تا پنجشنبه ۹ تا ۱۸</span></div>
+          <div class="sum-row"><span>آدرس</span><span style="text-align:left">تهران، خیابان ولیعصر، پاساژ رویال، طبقه دوم</span></div>
+        </div>
+        <div class="checkout-card">
+          <p class="checkout-card__t">ارسال پیام</p>
+          <form id="contact-form">
+            <div class="field" style="margin-bottom:12px"><label>نام *</label><input name="cname" required /></div>
+            <div class="field" style="margin-bottom:12px"><label>موبایل *</label><input name="cphone" inputmode="tel" required pattern="0\d{10}" placeholder="09xxxxxxxxx" /></div>
+            <div class="field" style="margin-bottom:12px"><label>موضوع</label><input name="csubject" /></div>
+            <div class="field" style="margin-bottom:16px"><label>متن پیام *</label><textarea name="ctext" rows="4" required></textarea></div>
+            <button class="btn btn-primary btn-block">ارسال پیام</button>
+            <p class="notice notice--success" id="contact-ok" style="display:none; margin-top:14px">پیام شما ثبت شد ✓ (دمو — در پنل مدیریت بخش «پیام‌ها» قابل مشاهده است)</p>
+          </form>
+        </div>
+      </div>
+    ) : null}
+
+    {blocks.map((p: string) => <p style="font-size:15px; line-height:2.5; margin-bottom:18px">{p}</p>)}
+
+    {isFaq ? (
+      <p class="notice notice--info">💡 این نسخه دمو است؛ پرداخت واقعی انجام نمی‌شود و داده‌ها فقط در مرورگر شما ذخیره می‌شوند.</p>
+    ) : null}
+
+    <div style="border-top:1px solid var(--c-border); margin-top:28px; padding-top:20px">
+      <a class="btn btn-default" href={BASE + '/'}>بازگشت به خانه</a>
+    </div>
+  </div>
+</Base>
+
+<script>
+  document.getElementById('contact-form')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const fd = new FormData(this);
+    const messages = JSON.parse(localStorage.getItem('ps_messages') || '[]');
+    messages.unshift({
+      id: 'm' + Date.now(),
+      name: fd.get('cname'), phone: fd.get('cphone'), email: '',
+      subject: fd.get('csubject') || 'پیام از فرم تماس',
+      text: fd.get('ctext'), date: new Date().toISOString().slice(0, 10), status: 'new',
+    });
+    localStorage.setItem('ps_messages', JSON.stringify(messages));
+    this.querySelector('button').textContent = 'ارسال شد ✓';
+    document.getElementById('contact-ok').style.display = 'block';
+    this.querySelectorAll('input,textarea').forEach((x) => (x.value = ''));
+  });
+</script>

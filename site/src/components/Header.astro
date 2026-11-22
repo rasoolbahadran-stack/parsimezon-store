@@ -1,0 +1,59 @@
+---
+import { BASE, categories } from '../lib/site';
+---
+
+<header class="site-header">
+  <div class="header-inner">
+    <button class="h-tool burger" id="burger" aria-label="منو">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <a class="logo" href={BASE + '/'}>
+      <svg class="logo__mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <rect width="48" height="48" rx="8" fill="#ED1844"/>
+        <path d="M14 34V14h4v10h4V14h4v20h-4v-6h-4v6h-4z" fill="#fff"/>
+        <circle cx="34" cy="17" r="4" fill="#FBBC34"/>
+      </svg>
+      <span class="logo__text">پارسی<i>مزون</i></span>
+    </a>
+    <nav class="main-nav" aria-label="منوی اصلی">
+      <ul>
+        <li><a href={BASE + '/shop'}>فروشگاه</a></li>
+        <li class="has-sub">
+          <a href={BASE + '/shop'}>دسته‌بندی‌ها</a>
+          <div class="mega">
+            <p class="mega__title">همه دسته‌بندی‌های پارسی‌مزون</p>
+            {categories.map((c: any) => (
+              <a href={`${BASE}/shop?cat=${c.slug}`}>{c.name}</a>
+            ))}
+          </div>
+        </li>
+        <li class="has-sub">
+          <a href={BASE + '/blog'}>مجله</a>
+          <div class="mega">
+            <p class="mega__title">مقالات راهنمای خرید و استایل</p>
+            <a href={BASE + '/blog/evening-dress-body-guide'}>راهنمای انتخاب پیراهن مجلسی</a>
+            <a href={BASE + '/blog/how-to-choose-wool-coat'}>پالتو پشمی خوب را بشناسید</a>
+            <a href={BASE + '/blog/color-matching-rules'}>اصول ترکیب رنگ در استایل</a>
+          </div>
+        </li>
+        <li><a href={BASE + '/about'}>درباره ما</a></li>
+        <li><a href={BASE + '/contact'}>تماس با ما</a></li>
+      </ul>
+    </nav>
+    <div class="header-tools">
+      <form class="header-search" id="header-search-form">
+        <input id="header-search-input" type="search" placeholder="جست‌وجوی محصول…" aria-label="جست‌وجو" />
+        <button type="submit" aria-label="جست‌وجو">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        </button>
+      </form>
+      <a class="h-tool" href={BASE + '/account'} aria-label="حساب کاربری">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+      </a>
+      <button class="h-tool" data-open-cart aria-label="سبد خرید">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l1.2 12.2a1 1 0 0 1-1 1.1H5.8a1 1 0 0 1-1-1.1L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>
+        <span class="badge-count" data-cart-count>۰</span>
+      </button>
+    </div>
+  </div>
+</header>
