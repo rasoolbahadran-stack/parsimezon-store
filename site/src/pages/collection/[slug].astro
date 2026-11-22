@@ -1,0 +1,32 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { BASE, img, collections, collectionProducts, fa } from '../../lib/site';
+
+export function getStaticPaths() {
+  return collections.map((c: any) => ({ params: { slug: c.slug }, props: { col: c } }));
+}
+const { col } = Astro.props as any;
+const items = collectionProducts(col);
+---
+
+<Base title={col.name} desc={col.desc}>
+  <section class="cat-banner">
+    <img src={img(col.image)} alt={`کالکشن ${col.name}`} width="1280" height="720" fetchpriority="high" />
+    <div class="cat-banner__body">
+      <p class="editorial__cat" style="margin-bottom:6px">کالکشن ویژه</p>
+      <h1 class="cat-banner__t">{col.name}</h1>
+      <p class="cat-banner__d">{col.desc}</p>
+    </div>
+  </section>
+
+  <div class="container" style="padding:clamp(24px,3vw,40px) 0">
+    <div class="shop-toolbar">
+      <span class="shop-toolbar__found">{fa(items.length)} محصول در این کالکشن</span>
+      <a class="section-link" href={`${BASE}/shop`}>مشاهده همه محصولات ←</a>
+    </div>
+    <div class="product-grid">
+      {items.map((p: any) => <ProductCard p={p} />)}
+    </div>
+  </div>
+</Base>

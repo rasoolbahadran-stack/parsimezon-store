@@ -1,21 +1,36 @@
 ---
-import { BASE, img, fa, money, salePercent, stars, catName } from '../lib/site';
-const { p } = Astro.props as any;
+import { BASE, img, fa, money, salePercent, catName, COLOR_HEX } from '../lib/site';
+const { p, hover = true } = Astro.props as any;
+const off = salePercent(p);
+const second = p.images[1] || p.images[0];
 ---
 
-<article class="product-card reveal">
+<article class="product-card reveal" data-pid={p.id}>
   <div class="product-card__media">
-    {p.oldPrice ? <span class="badge badge--sale">٪{fa(salePercent(p))} تخفیف</span> : p.featured ? <span class="badge badge--new">جدید</span> : null}
-    {p.stock <= 0 ? <span class="badge badge--out">ناموجود</span> : null}
+    {off ? <span class="badge badge--sale">٪{fa(off)} تخفیف</span> : p.bestseller ? <span class="badge badge--best">پرفروش</span> : p.isNew ? <span class="badge badge--new">جدید</span> : null}
+    {p.stock <= 0 ? <span class="badge badge--out" style="top:44px">ناموجود</span> : null}
     <a href={`${BASE}/product/${p.slug}`} aria-label={p.name}>
-      <img src={img(p.images[0])} alt={p.name} loading="lazy" width="600" height="800" />
+      <img class="img-main" src={img(p.images[0])} alt={p.name} loading="lazy" width="600" height="800" />
+      {hover && second !== p.images[0] ? <img class="img-hover" src={img(second)} alt={`${p.name} — نمای دوم`} loading="lazy" width="600" height="800" /> : null}
     </a>
+    <div class="product-card__tools">
+      <button class="tool-btn" data-wish-btn={p.id} aria-label="افزودن به علاقه‌مندی‌ها">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7.5-4.6-9.5-9A5.5 5.5 0 0 1 12 6.3 5.5 5.5 0 0 1 21.5 12c-2 4.4-9.5 9-9.5 9z"/></svg>
+      </button>
+      <button class="tool-btn" data-quickview={p.id} aria-label="مشاهده سریع">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></svg>
+      </button>
+      <button class="tool-btn" data-compare-btn={p.id} aria-label="افزودن به مقایسه">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v18M16 3v18M3 8l5-5 5 5M21 16l-5 5-5-5"/></svg>
+      </button>
+    </div>
     <div class="product-card__actions">
       {p.stock > 0 ? (
         <button class="add-btn" data-add={p.id}>افزودن به سبد</button>
       ) : (
         <button class="add-btn" disabled>ناموجود</button>
       )}
+      <button class="qv-btn" data-quickview={p.id}>مشاهده سریع</button>
     </div>
   </div>
   <div class="product-card__body">
@@ -28,9 +43,8 @@ const { p } = Astro.props as any;
       </span>
       <span class="price__unit">تومان</span>
     </div>
-    <div style="margin-top:6px; display:flex; justify-content:space-between; align-items:center">
-      <span class="stars">{stars(p.rating)}</span>
-      <span class="product-card__cat">({fa(p.reviewsCount)} نظر)</span>
+    <div class="color-dots" aria-hidden="true">
+      {p.colors.slice(0, 4).map((c: string) => <i style={`background:${COLOR_HEX[c] || '#ccc'}`}></i>)}
     </div>
   </div>
 </article>

@@ -1,7 +1,7 @@
 'use client';
 /* مدیریت محصولات — لیست کامل با فیلتر وضعیت + فرم جامع (تصاویر، تنوع، SEO، مشخصات) */
 import { useEffect, useMemo, useState } from 'react';
-import { list, remove, nextId, faNum, money, type Rec } from '@/lib/store';
+import { list, remove, nextId, faNum, money, type Rec, REPO_IMAGES } from '@/lib/store';
 import { Modal, ConfirmDelete, toast, Field, TextField, TextArea, Select } from '@/lib/ui';
 import { ImageField } from '@/components/ResourcePage';
 
@@ -96,7 +96,7 @@ function ProductForm({ initial, cats, brands, onClose, onSaved }: { initial: Rec
   const isNew = !!initial.__new;
   const [p, setP] = useState<Rec>(
     isNew
-      ? { id: nextId('ps_products', 'p'), name: '', slug: '', sku: 'PS-NEW', price: 0, oldPrice: null, stock: 10, status: 'published', featured: false, images: ['p1'], shortDesc: '', desc: '', specs: {}, colors: [], sizes: [], variants: [], tags: [], rating: 4.5, reviewsCount: 0, weight: 400, dims: '', createdAt: new Date().toISOString().slice(0, 10), seo: { metaTitle: '', metaDescription: '' }, category: cats[0]?.id, brand: brands[0]?.id }
+      ? { id: nextId('ps_products', 'p'), name: '', slug: '', sku: 'PS-NEW', price: 0, oldPrice: null, stock: 10, status: 'published', featured: false, bestseller: false, isNew: true, images: ['p1'], shortDesc: '', desc: '', specs: {}, colors: [], sizes: [], variants: [], tags: [], rating: 4.5, reviewsCount: 0, weight: 400, dims: '', createdAt: new Date().toISOString().slice(0, 10), seo: { metaTitle: '', metaDescription: '' }, category: cats[0]?.id, brand: brands[0]?.id }
       : JSON.parse(JSON.stringify(initial))
   );
   const set = (k: string, v: any) => setP((prev) => ({ ...prev, [k]: v }));
@@ -137,9 +137,25 @@ function ProductForm({ initial, cats, brands, onClose, onSaved }: { initial: Rec
             <span style={{ fontSize: 12.5, color: 'var(--text-soft)' }}>نمایش در بخش ویژه صفحه اصلی</span>
           </label>
         </Field>
+        <Field label="پرفروش">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0' }}>
+            <input type="checkbox" checked={!!p.bestseller} onChange={(e) => set('bestseller', e.target.checked)} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />
+            <span style={{ fontSize: 12.5, color: 'var(--text-soft)' }}>نشان «پرفروش» و ورود به بخش محبوب‌ترین‌ها</span>
+          </label>
+        </Field>
+        <Field label="جدید">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0' }}>
+            <input type="checkbox" checked={!!p.isNew} onChange={(e) => set('isNew', e.target.checked)} style={{ accentColor: 'var(--primary)', width: 16, height: 16 }} />
+            <span style={{ fontSize: 12.5, color: 'var(--text-soft)' }}>نشان «جدید» روی کارت محصول</span>
+          </label>
+        </Field>
       </div>
 
       <Field label="تصویر شاخص"><ImageField name="mainImage" defaultValue={p.images?.[0] || ''} /></Field>
+      <Field label="تصویر دوم (نمایش در هاور کارت)">
+        <Select options={[{ value: '', label: 'بدون تصویر دوم' }, ...REPO_IMAGES.map((i) => ({ value: i, label: i }))]} value={p.images?.[1] || ''} onChange={(e) => set('images', [p.images?.[0] || 'p1', e.target.value, ...(p.images?.slice(2) || [])].filter(Boolean))} />
+        <p style={{ fontSize: 11, color: 'var(--text-soft)' }}>در صورت خالی‌بودن، فقط تصویر شاخص نمایش داده می‌شود.</p>
+      </Field>
       <Field label="توضیح کوتاه"><TextArea value={p.shortDesc} rows={2} onChange={(e) => set('shortDesc', e.target.value)} /></Field>
       <Field label="توضیحات کامل"><TextArea value={p.desc} rows={5} onChange={(e) => set('desc', e.target.value)} /></Field>
 

@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { BASE, staticPages, img, fa } from '../lib/site';
+import { BASE, staticPages, img, fa, settings } from '../lib/site';
 
 export function getStaticPaths() {
   return staticPages.map((pg: any) => ({ params: { page: pg.slug }, props: { pg } }));
@@ -8,7 +8,7 @@ export function getStaticPaths() {
 const { pg } = Astro.props as any;
 const isContact = pg.slug === 'contact';
 const isFaq = pg.slug === 'faq';
-const blocks = pg.body.split('\n\n');
+const blocks = (pg.body || '').split('\n\n').filter(Boolean);
 ---
 
 <Base title={pg.title} desc={`${pg.title} — پارسی‌مزون`}>
@@ -19,17 +19,20 @@ const blocks = pg.body.split('\n\n');
     </div>
   </section>
 
-  <div class="container" style="max-width:860px; padding:34px 20px">
+  <div class="container page-content">
     {pg.image ? <img src={img(pg.image)} alt={pg.title} style="width:100%; aspect-ratio:4/3; object-fit:cover; margin-bottom:24px" width="800" height="600" /> : null}
 
     {isContact ? (
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start" id="contact-grid">
-        <div class="checkout-card">
-          <p class="checkout-card__t">راه‌های ارتباط</p>
-          <div class="sum-row"><span>تلفن</span><span dir="ltr">۰۲۱-۹۱۰۰۲۲۳۳</span></div>
-          <div class="sum-row"><span>ایمیل</span><span dir="ltr">info@parsimezon-demo.ir</span></div>
-          <div class="sum-row"><span>ساعات کاری</span><span>شنبه تا پنجشنبه ۹ تا ۱۸</span></div>
-          <div class="sum-row"><span>آدرس</span><span style="text-align:left">تهران، خیابان ولیعصر، پاساژ رویال، طبقه دوم</span></div>
+      <div class="contact-grid" id="contact-grid">
+        <div class="contact-card">
+          <p><b>📞 تلفن:</b> <span dir="ltr">۰۲۱-۹۱۰۰۲۲۳۳</span></p>
+          <p><b>✉️ ایمیل:</b> <span dir="ltr">info@parsimezon-demo.ir</span></p>
+          <p><b>🕘 ساعات کاری:</b> شنبه تا پنجشنبه ۹ تا ۱۸</p>
+          <p><b>📍 آدرس:</b> تهران، خیابان ولیعصر، پاساژ رویال، طبقه دوم، واحد ۲۰۴</p>
+          <div class="footer-social" style="margin-top:14px">
+            <a href={settings.socials.instagram} aria-label="اینستاگرام" rel="noopener" style="color:var(--c-ink);background:var(--c-surface)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></a>
+            <a href={settings.socials.telegram} aria-label="تلگرام" rel="noopener" style="color:var(--c-ink);background:var(--c-surface)"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M21 4L2.5 11.3l5.6 1.7L10 19l2.9-3.6 4.7 3.4L21 4z"/></svg></a>
+          </div>
         </div>
         <div class="checkout-card">
           <p class="checkout-card__t">ارسال پیام</p>
@@ -45,14 +48,22 @@ const blocks = pg.body.split('\n\n');
       </div>
     ) : null}
 
-    {blocks.map((p: string) => <p style="font-size:15px; line-height:2.5; margin-bottom:18px">{p}</p>)}
+    {blocks.map((p: string) => p.startsWith('## ') ? <h2>{p.slice(3)}</h2> : <p>{p}</p>)}
 
     {isFaq ? (
-      <p class="notice notice--info">💡 این نسخه دمو است؛ پرداخت واقعی انجام نمی‌شود و داده‌ها فقط در مرورگر شما ذخیره می‌شوند.</p>
+      <div>
+        {(pg.faqs || []).map(([q, a]: any) => (
+          <details class="faq-item">
+            <summary>{q}</summary>
+            <div class="faq-a">{a}</div>
+          </details>
+        ))}
+        <p class="notice notice--info" style="margin-top:18px">💡 این نسخه دمو است؛ پرداخت واقعی انجام نمی‌شود و داده‌ها فقط در مرورگر شما ذخیره می‌شوند.</p>
+      </div>
     ) : null}
 
     <div style="border-top:1px solid var(--c-border); margin-top:28px; padding-top:20px">
-      <a class="btn btn-default" href={BASE + '/'}>بازگشت به خانه</a>
+      <a class="btn btn-ghost" href={BASE + '/'}>بازگشت به خانه</a>
     </div>
   </div>
 </Base>

@@ -1,58 +1,93 @@
 ---
 import Base from '../../layouts/Base.astro';
 import ProductCard from '../../components/ProductCard.astro';
-import { BASE, products, img, fa, money, catName, catSlug, brandName, salePercent, stars, relatedTo, dateFa, reviews } from '../../lib/site';
+import { BASE, products, img, fa, catName, catSlug, brandName, salePercent, stars, relatedTo, complementsTo, dateFa, reviews, COLOR_HEX } from '../../lib/site';
 
 export function getStaticPaths() {
   return products.map((p: any) => ({ params: { slug: p.slug }, props: { p } }));
 }
 const { p } = Astro.props as any;
 const rel = relatedTo(p);
+const comp = complementsTo(p);
 const pReviews = reviews.filter((r: any) => r.productId === p.id && r.status === 'approved');
-const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
+const gallery = [...p.images];
+const off = salePercent(p);
+
+const SIZE_TABLES: Record<string, [string, string, string, string][]> = {
+  letters: [['S', '۸۴–۸۸', '۶۴–۶۸', '۸۸–۹۲'], ['M', '۸۸–۹۴', '۷۰–۷۴', '۹۴–۹۸'], ['L', '۹۴–۱۰۰', '۷۶–۸۰', '۱۰۰–۱۰۴'], ['XL', '۱۰۰–۱۰۶', '۸۲–۸۶', '۱۰۶–۱۱۰']],
+  evening: [['S', '۸۴–۸۸', '۶۴–۶۸', '۸۸–۹۲'], ['M', '۸۸–۹۴', '۷۰–۷۴', '۹۴–۹۸'], ['L', '۹۴–۱۰۰', '۷۶–۸۰', '۱۰۰–۱۰۴']],
+  coat: [['۳۶', '۸۲–۸۶', '۶۲–۶۶', '۸۸–۹۲'], ['۳۸', '۸۶–۹۰', '۶۶–۷۰', '۹۲–۹۶'], ['۴۰', '۹۰–۹۴', '۷۰–۷۴', '۹۶–۱۰۰'], ['۴۲', '۹۴–۹۸', '۷۴–۷۸', '۱۰۰–۱۰۴'], ['۴۴', '۹۸–۱۰۲', '۷۸–۸۲', '۱۰۴–۱۰۸']],
+  num: [['۳۶', '۶۶–۷۰', '۸۸–۹۲'], ['۳۸', '۷۰–۷۴', '۹۲–۹۶'], ['۴۰', '۷۴–۷۸', '۹۶–۱۰۰'], ['۴۲', '۷۸–۸۲', '۱۰۰–۱۰۴'], ['۴۴', '۸۲–۸۶', '۱۰۴–۱۰۸']],
+  shoes: [['۳۶', '۲۳'], ['۳۷', '۲۳٫۵'], ['۳۸', '۲۴'], ['۳۹', '۲۴٫۵'], ['۴۰', '۲۵']],
+  one: [],
+};
+const sizeKey = p.sizes.includes('تک‌سایز') ? 'one' : p.sizes[0]?.startsWith('S') ? 'letters' : p.sizes[0] === 'L' || p.sizes[0] === 'M' ? 'letters' : p.category === 'c-evening' ? 'evening' : p.category === 'c-shoes' ? 'shoes' : (p.sizes.includes('S') || p.sizes.includes('M')) ? 'letters' : 'num';
+const sizeTable = SIZE_TABLES[sizeKey] || SIZE_TABLES.letters;
+const showSizeGuide = sizeTable.length > 0 && !['c-bag', 'c-scarf', 'c-belt'].includes(p.category);
+
+const productSchema = JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'Product',
+  name: p.name, sku: p.sku, image: gallery.map((g: string) => `https://rasoolbahadran-stack.github.io/parsimezon-store/assets/img/${g}.webp`),
+  description: p.shortDesc,
+  brand: { '@type': 'Brand', name: brandName(p.brand) },
+  aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, reviewCount: p.reviewsCount },
+  offers: { '@type': 'Offer', priceCurrency: 'IRT', price: p.price, availability: p.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' },
+});
+const crumbSchema = JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'خانه', item: 'https://rasoolbahadran-stack.github.io/parsimezon-store/' },
+    { '@type': 'ListItem', position: 2, name: 'فروشگاه', item: 'https://rasoolbahadran-stack.github.io/parsimezon-store/shop/' },
+    { '@type': 'ListItem', position: 3, name: catName(p.category), item: `https://rasoolbahadran-stack.github.io/parsimezon-store/category/${catSlug(p.category)}/` },
+    { '@type': 'ListItem', position: 4, name: p.name },
+  ],
+});
 ---
 
-<Base title={p.name} desc={p.shortDesc}>
-  <section class="page-head">
-    <div class="container">
-      <h1 class="page-head__t" style="font-size:20px">{p.name}</h1>
-      <p class="breadcrumb">
-        <a href={BASE + '/'}>خانه</a> / <a href={BASE + '/shop'}>فروشگاه</a> / <a href={`${BASE}/shop?cat=${catSlug(p.category)}`}>{catName(p.category)}</a> / {p.name}
-      </p>
-    </div>
-  </section>
+<Base title={p.seo?.metaTitle || p.name} desc={p.seo?.metaDescription || p.shortDesc}>
+  <script type="application/ld+json" set:html={productSchema}></script>
+  <script type="application/ld+json" set:html={crumbSchema}></script>
+
+  <script type="application/json" id="ps-page-product" set:html={JSON.stringify(p)}></script>
 
   <div class="container">
+    <p class="breadcrumb" style="padding-top:14px">
+      <a href={BASE + '/'}>خانه</a> / <a href={BASE + '/shop'}>فروشگاه</a> / <a href={`${BASE}/category/${catSlug(p.category)}`}>{catName(p.category)}</a> / {p.name}
+    </p>
+
     <div class="product-page">
       <div>
-        <div class="gallery__main"><img id="gallery-main" src={img(p.images[0])} alt={p.name} width="600" height="800" /></div>
-        <div class="gallery__thumbs" id="gallery-thumbs">
-          {gallery.map((g: string, i: number) => (
-            <img src={img(g)} alt={p.name} class={i === 0 ? 'is-active' : ''} loading="lazy" />
-          ))}
+        <div class="gallery">
+          <div class="gallery__main" id="gallery-main-wrap">
+            <img id="gallery-main" src={img(gallery[0])} alt={p.name} width="720" height="960" fetchpriority="high" />
+          </div>
+          <div class="gallery__thumbs" id="gallery-thumbs">
+            {gallery.map((g: string, i: number) => (
+              <img src={img(g)} alt={`${p.name} — تصویر ${i + 1}`} class={i === 0 ? 'is-active' : ''} loading={i === 0 ? 'eager' : 'lazy'} width="72" height="96" />
+            ))}
+          </div>
         </div>
       </div>
 
       <div class="p-info">
-        {p.oldPrice ? <span class="badge badge--sale" style="position:static;display:inline-block">٪{fa(salePercent(p))} تخفیف</span> : null}
-        <h2 class="p-info__title">{p.name}</h2>
+        <p class="p-info__brand">برند: <em>{brandName(p.brand)}</em> | کد کالا: <em dir="ltr">{p.sku}</em></p>
+        <h1 class="p-info__title">{p.name}</h1>
         <div class="p-info__meta">
           <span class="stars">{stars(p.rating)}</span>
-          <span>({fa(p.reviewsCount)} دیدگاه)</span>
-          <span>کد کالا: {p.sku}</span>
-          <span>برند: {brandName(p.brand)}</span>
+          <span>{fa(p.rating)} از ۵ ({fa(p.reviewsCount)} دیدگاه)</span>
+          {p.bestseller ? <span class="badge badge--best" style="position:static;display:inline-block">پرفروش</span> : null}
+          {p.isNew && !off ? <span class="badge badge--new" style="position:static;display:inline-block">جدید</span> : null}
         </div>
-        <p style="font-size:14.5px; line-height:2.2">{p.shortDesc}</p>
+        <p style="font-size:14px; line-height:2.2; color:var(--c-text-soft)">{p.shortDesc}</p>
 
         <div class="p-price">
           <div class="p-price__num">
             {p.oldPrice ? <del>{fa(p.oldPrice)}</del> : null}
             <span id="p-price">{fa(p.price)}</span> تومان
           </div>
-          <div style="text-align:left; font-size:12.5px; color:var(--c-text-soft)">
-            {p.stock > 0 ? `${fa(p.stock)} عدد موجود` : 'ناموجود'}
-          </div>
+          {off ? <span class="p-price__off">٪{fa(off)} تخفیف</span> : null}
         </div>
+        <p class="stock-note" id="stock-note"></p>
 
         <div class="opt-group">
           <p class="opt-group__t">رنگ: <span id="opt-color-lbl">{p.colors[0]}</span></p>
@@ -65,18 +100,19 @@ const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
           <div class="swatches" id="opt-sizes">
             {p.sizes.map((s: string, i: number) => <button class={`swatch ${i === 0 ? 'is-active' : ''}`} data-v={s}>{s}</button>)}
           </div>
+          {showSizeGuide && <a class="size-guide-link" href="#size-guide">📏 راهنمای سایز</a>}
         </div>
 
         <div class="p-cta">
           <div class="qty">
-            <button id="qty-minus">−</button>
+            <button id="qty-minus" aria-label="کاهش">−</button>
             <input id="qty-input" value="1" readonly aria-label="تعداد" />
-            <button id="qty-plus">+</button>
+            <button id="qty-plus" aria-label="افزایش">+</button>
           </div>
           <button class="btn btn-primary" id="add-to-cart" data-pid={p.id} disabled={p.stock <= 0}>
             {p.stock > 0 ? 'افزودن به سبد خرید' : 'ناموجود'}
           </button>
-          <a class="btn btn-default" id="quick-pay" href={`${BASE}/checkout`}>خرید سریع</a>
+          <button class="wish-btn" data-wish-btn={p.id} id="wish-single" aria-label="علاقه‌مندی">♥</button>
         </div>
 
         <ul class="p-features">
@@ -85,6 +121,15 @@ const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
           <li>📦 بسته‌بندی شیک و ایمن</li>
           <li>💬 مشاوره سایز رایگان</li>
         </ul>
+        <div class="share-row">
+          <span>اشتراک‌گذاری:</span>
+          <a href={`https://t.me/share/url?url=https://rasoolbahadran-stack.github.io/parsimezon-store/product/${p.slug}`} target="_blank" rel="noopener" aria-label="تلگرام">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 4L2.5 11.3l5.6 1.7L10 19l2.9-3.6 4.7 3.4L21 4z"/></svg>
+          </a>
+          <a href={`https://wa.me/?text=${encodeURIComponent(p.name)}`} target="_blank" rel="noopener" aria-label="واتساپ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.7-1.2A9 9 0 1 0 12 3z"/></svg>
+          </a>
+        </div>
       </div>
     </div>
 
@@ -93,6 +138,8 @@ const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
       <div class="tab-nav">
         <button class="is-active" data-tab="desc">توضیحات</button>
         <button data-tab="specs">مشخصات</button>
+        {showSizeGuide ? <button data-tab="guide">راهنمای سایز</button> : null}
+        <button data-tab="ship">ارسال و بازگشت</button>
         <button data-tab="reviews">دیدگاه‌ها ({fa(pReviews.length)})</button>
       </div>
       <div class="tab-panel is-active" data-panel="desc">
@@ -103,9 +150,39 @@ const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
           {Object.entries(p.specs).map(([k, v]) => (
             <tr><td>{k}</td><td>{v as string}</td></tr>
           ))}
+          <tr><td>برند</td><td>{brandName(p.brand)}</td></tr>
           <tr><td>وزن</td><td>{fa(p.weight)} گرم</td></tr>
           <tr><td>ابعاد بسته</td><td>{p.dims} سانتی‌متر</td></tr>
         </table>
+      </div>
+      {showSizeGuide && (
+        <div class="tab-panel" data-panel="guide" id="size-guide">
+          <p style="font-weight:700">جدول سایز بر اساس اندازه بدن (سانتی‌متر)</p>
+          <table class="size-table">
+            <thead>
+              <tr>
+                <th>سایز</th>
+                {sizeTable[0].length > 3 ? <th>دور سینه</th> : null}
+                {sizeTable[0].length > 2 ? <th>دور کمر</th> : null}
+                <th>دور لگن</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sizeTable.map((row) => (
+                <tr>{row.map((cell: string, i: number) => <td>{cell}</td>)}</tr>
+              ))}
+            </tbody>
+          </table>
+          <p style="font-size:12.5px;color:var(--c-text-soft);margin-top:10px">
+            برای انتخاب دقیق، دور سینه/کمر/لگن خود را با جدول مقایسه کنید. بین دو سایز، برای مدل‌های فیت سایز بزرگ‌تر مناسب‌تر است.
+          </p>
+        </div>
+      )}
+      <div class="tab-panel" data-panel="ship">
+        <p><b>ارسال:</b> سفارش‌های تا ساعت ۱۳ همان روز پردازش می‌شوند. پست پیشتاز ۳ تا ۵ روز کاری، تیپاکس ۲ تا ۴ روز و پیک تهران همان روز.</p>
+        <p><b>ارسال رایگان:</b> سفارش‌های بالای ۳٬۰۰۰٬۰۰۰ تومان با پست پیشتاز رایگان ارسال می‌شوند.</p>
+        <p><b>بازگشت کالا:</b> تا ۷ روز پس از دریافت، در صورت حفظ برچسب و بسته‌بندی اولیه، امکان بازگشت یا تعویض سایز وجود دارد.</p>
+        <p><b>پرداخت دمو:</b> درگاه این فروشگاه آزمایشی است و هیچ مبلغ واقعی برداشت نمی‌شود.</p>
       </div>
       <div class="tab-panel" data-panel="reviews">
         {pReviews.length ? pReviews.map((r: any) => (
@@ -115,7 +192,7 @@ const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
               <span class="stars">{stars(r.rating)}</span>
             </div>
             <p class="product-card__cat">{dateFa(r.date)}</p>
-            <p style="font-size:14px; margin-top:6px">{r.text}</p>
+            <p style="font-size:13.5px; margin-top:6px">{r.text}</p>
           </div>
         )) : (
           <p style="color:var(--c-text-soft)">هنوز دیدگاهی برای این محصول ثبت نشده است. اولین نفر باشید!</p>
@@ -129,40 +206,97 @@ const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
             </div>
             <div class="field field--full"><label>متن دیدگاه</label><textarea name="rtext" rows="3" required></textarea></div>
           </div>
-          <button class="btn btn-primary" style="margin-top:12px">ارسال دیدگاه</button>
+          <button class="btn btn-primary" style="margin-top:12px" type="submit">ارسال دیدگاه</button>
         </form>
       </div>
     </div>
 
-    <!-- مرتبط‌ها -->
     {rel.length ? (
       <section class="section">
-        <div class="section-head"><h2 class="section-title">محصولات مرتبط</h2></div>
+        <div class="section-head"><h2 class="section-title"><small>RELATED</small>محصولات مرتبط</h2></div>
         <div class="product-grid">{rel.map((x: any) => <ProductCard p={x} />)}</div>
       </section>
     ) : null}
+
+    {comp.length ? (
+      <section class="section section--ivory">
+        <div class="section-head"><h2 class="section-title"><small>COMPLETE THE LOOK</small>استایل را کامل کنید</h2></div>
+        <div class="product-grid">{comp.map((x: any) => <ProductCard p={x} />)}</div>
+      </section>
+    ) : null}
+  </div>
+
+  <!-- نوار چسبنده خرید موبایل -->
+  <div class="sticky-atc" id="sticky-atc">
+    <img src={img(gallery[0])} alt={p.name} loading="lazy" />
+    <div>
+      <p class="sticky-atc__t">{p.name}</p>
+      <p class="sticky-atc__p" id="sticky-price">{fa(p.price)} تومان</p>
+    </div>
+    <button class="btn btn-primary" id="sticky-add" disabled={p.stock <= 0}>{p.stock > 0 ? 'افزودن به سبد' : 'ناموجود'}</button>
+  </div>
+
+  <!-- لایت‌باکس گالری -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox__close" id="lightbox-close" aria-label="بستن">✕</button>
+    <img id="lightbox-img" src={img(gallery[0])} alt={p.name} />
   </div>
 </Base>
 
 <script is:inline>
   (function () {
-    const base = document.querySelector('link[rel=icon]').getAttribute('href').replace('/favicon.svg', '');
+    const base = document.documentElement.dataset.base || '';
     const pid = document.getElementById('add-to-cart').dataset.pid;
     const products = JSON.parse(localStorage.getItem('ps_products') || '[]');
-    const p = products.find((x) => x.id === pid) || JSON.parse(document.getElementById('ps-seed').textContent).products.find((x) => x.id === pid);
+    const p = products.find((x) => x.id === pid) || JSON.parse(document.getElementById('ps-page-product').textContent);
     if (!p) return;
     let color = p.colors[0], size = p.sizes[0], qty = 1;
+    const fa = (n) => new Intl.NumberFormat('fa-IR').format(n);
 
-    /* گالری */
+    /* گالری + زوم + لایت‌باکس */
+    const mainImg = document.getElementById('gallery-main');
     document.querySelectorAll('#gallery-thumbs img').forEach((t) => {
       t.addEventListener('click', () => {
         document.querySelectorAll('#gallery-thumbs img').forEach((x) => x.classList.remove('is-active'));
         t.classList.add('is-active');
-        document.getElementById('gallery-main').src = t.src;
+        mainImg.src = t.src;
+        document.getElementById('lightbox-img').src = t.src;
       });
     });
+    const wrap = document.getElementById('gallery-main-wrap');
+    if (window.matchMedia('(min-width: 993px)').matches) {
+      wrap.addEventListener('mouseenter', () => wrap.classList.add('is-zooming'));
+      wrap.addEventListener('mouseleave', () => wrap.classList.remove('is-zooming'));
+      wrap.style.transformOrigin = 'top right';
+    }
+    wrap.addEventListener('click', () => document.getElementById('lightbox').classList.add('is-open'));
+    document.getElementById('lightbox-close').addEventListener('click', () => document.getElementById('lightbox').classList.remove('is-open'));
 
-    /* تنوع */
+    /* تنوع و موجودی */
+    const stockNote = document.getElementById('stock-note');
+    let stockLeft = p.stock;
+    function currentVariant() {
+      const v = (p.variants || []).find((x) => x.color === color && x.size === size);
+      const price = v ? (v.price ?? p.price) : p.price;
+      stockLeft = v ? v.stock : p.stock;
+      document.getElementById('p-price').textContent = fa(price);
+      document.getElementById('sticky-price').textContent = fa(price) + ' تومان';
+      document.getElementById('qty-input').value = qty = Math.min(qty, Math.max(1, stockLeft));
+      const addBtn = document.getElementById('add-to-cart');
+      const stickyBtn = document.getElementById('sticky-add');
+      if (stockLeft <= 0) {
+        stockNote.textContent = 'این ترکیب رنگ/سایز موقتا ناموجود است';
+        if (addBtn) { addBtn.disabled = true; addBtn.textContent = 'ناموجود'; }
+        if (stickyBtn) stickyBtn.disabled = true;
+      } else {
+        if (stockLeft <= 3) stockNote.textContent = `تنها ${fa(stockLeft)} عدد باقی مانده`;
+        else stockNote.textContent = `${fa(stockLeft)} عدد موجود`;
+        if (addBtn) { addBtn.disabled = false; addBtn.textContent = 'افزودن به سبد خرید'; }
+        if (stickyBtn) stickyBtn.disabled = false;
+      }
+      stockNote.classList.toggle('is-low', stockLeft > 0 && stockLeft <= 3);
+      stockNote.classList.toggle('is-ok', stockLeft > 3);
+    }
     function pick(box, lblId, cb) {
       box.querySelectorAll('.swatch').forEach((b) =>
         b.addEventListener('click', () => {
@@ -173,34 +307,15 @@ const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
         })
       );
     }
-    let stockLeft = p.stock;
-    function currentVariant() {
-      const v = (p.variants || []).find((x) => x.color === color && x.size === size);
-      if (v) {
-        document.getElementById('p-price').textContent = new Intl.NumberFormat('fa-IR').format(v.price);
-        stockLeft = v.stock;
-      } else {
-        document.getElementById('p-price').textContent = new Intl.NumberFormat('fa-IR').format(p.price);
-        stockLeft = p.stock;
-      }
-      document.getElementById('qty-input').value = qty = Math.min(qty, Math.max(1, stockLeft));
-    }
     pick(document.getElementById('opt-colors'), 'opt-color-lbl', (v) => { color = v; currentVariant(); });
     pick(document.getElementById('opt-sizes'), 'opt-size-lbl', (v) => { size = v; currentVariant(); });
+    currentVariant();
 
-    /* تعداد */
     document.getElementById('qty-plus').addEventListener('click', () => { if (qty < stockLeft) { qty++; document.getElementById('qty-input').value = qty; } });
     document.getElementById('qty-minus').addEventListener('click', () => { if (qty > 1) { qty--; document.getElementById('qty-input').value = qty; } });
 
-    /* افزودن به سبد */
-    document.getElementById('add-to-cart').addEventListener('click', () => {
-      window.__psAdd(p.id, `${color} / ${size}`, qty, p.name);
-    });
-
-    /* خرید سریع: ذخیره انتخاب فعلی و رفتن به تسویه */
-    document.getElementById('quick-pay').addEventListener('click', () => {
-      window.__psAdd(p.id, `${color} / ${size}`, qty, p.name);
-    });
+    document.getElementById('add-to-cart').addEventListener('click', () => window.__psAdd(p.id, `${color} / ${size}`, qty, p.name));
+    document.getElementById('sticky-add')?.addEventListener('click', () => window.__psAdd(p.id, `${color} / ${size}`, qty, p.name));
 
     /* تب‌ها */
     document.querySelectorAll('.tab-nav button').forEach((b) =>
@@ -211,6 +326,11 @@ const gallery = [...p.images, ...relatedTo(p, 2).map((x: any) => x.images[0])];
         document.querySelector(`[data-panel="${b.dataset.tab}"]`).classList.add('is-active');
       })
     );
+    document.querySelector('.size-guide-link')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelector('[data-tab="guide"]')?.click();
+      document.querySelector('[data-panel="guide"]')?.scrollIntoView({ behavior: 'smooth' });
+    });
 
     /* ثبت دیدگاه دمو */
     document.getElementById('review-form').addEventListener('submit', function (e) {

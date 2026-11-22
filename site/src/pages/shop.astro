@@ -1,10 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
-import ProductCard from '../components/ProductCard.astro';
-import { BASE, categories, products, catName } from '../lib/site';
+import { BASE, categories } from '../lib/site';
 ---
 
-<Base title="فروشگاه" desc="خرید آنلاین پوشاک زنانه از پارسی‌مزون؛ پیراهن، پالتو، ست و بلوز با فیلتر قیمت، رنگ و سایز">
+<Base title="فروشگاه" desc="خرید آنلاین پوشاک زنانه پارسی‌مزون؛ پالتو، مانتو، شومیز، بافت، لباس مجلسی و اکسسوری با فیلتر رنگ، سایز و قیمت">
   <section class="page-head">
     <div class="container">
       <h1 class="page-head__t">فروشگاه پارسی‌مزون</h1>
@@ -12,14 +11,27 @@ import { BASE, categories, products, catName } from '../lib/site';
     </div>
   </section>
 
+  <div class="container" style="padding-top:18px">
+    <div class="cat-chips" id="cat-chips">
+      <button class="cat-chip is-active" data-slug="all">همه</button>
+      {categories.map((c: any) => <button class="cat-chip" data-slug={c.slug}>{c.name}</button>)}
+    </div>
+  </div>
+
   <div class="container shop-layout">
-    <aside class="shop-side">
+    <aside class="shop-side" id="shop-side">
+      <div class="filter-box" style="display:flex;justify-content:space-between;align-items:center">
+        <p class="filter-box__t" style="margin:0">فیلترها</p>
+        <button id="filter-clear" type="button">حذف فیلترها</button>
+        <button id="filter-close" type="button" style="font-size:16px" aria-label="بستن فیلتر">✕</button>
+      </div>
       <div class="filter-box">
-        <p class="filter-box__t">دسته‌بندی</p>
-        <label><input type="checkbox" class="f-cat" value="all" checked />همه</label>
-        {categories.map((c: any) => (
-          <label><input type="checkbox" class="f-cat" value={c.slug} />{c.name}</label>
-        ))}
+        <p class="filter-box__t">رنگ</p>
+        <div class="filter-colors" id="filter-colors"></div>
+      </div>
+      <div class="filter-box">
+        <p class="filter-box__t">سایز</p>
+        <div id="filter-sizes"></div>
       </div>
       <div class="filter-box">
         <p class="filter-box__t">محدوده قیمت (تومان)</p>
@@ -27,116 +39,51 @@ import { BASE, categories, products, catName } from '../lib/site';
           <input id="f-min" inputmode="numeric" placeholder="از" />
           <input id="f-max" inputmode="numeric" placeholder="تا" />
         </div>
-        <button class="btn btn-primary btn-sm btn-block" style="margin-top:10px" id="f-apply">اعمال فیلتر</button>
+        <button class="btn btn-primary btn-sm btn-block" style="margin-top:10px" id="f-apply" type="button">اعمال فیلتر</button>
       </div>
       <div class="filter-box">
-        <p class="filter-box__t">سایز</p>
-        {['S', 'M', 'L', 'XL'].map((s) => (
-          <label><input type="checkbox" class="f-size" value={s} />{s}</label>
-        ))}
-      </div>
-      <div class="filter-box">
-        <p class="filter-box__t">فقط تخفیف‌دارها</p>
-        <label><input type="checkbox" id="f-sale" />نمایش محصولات تخفیف‌دار</label>
+        <label><input type="checkbox" class="f-sale" />فقط محصولات تخفیف‌دار</label>
+        <label><input type="checkbox" class="f-stock" />فقط کالاهای موجود</label>
       </div>
     </aside>
 
     <div>
       <div class="shop-toolbar">
         <span class="shop-toolbar__found" id="found-count"></span>
-        <select id="f-sort" aria-label="مرتب‌سازی">
-          <option value="new">جدیدترین</option>
-          <option value="cheap">ارزان‌ترین</option>
-          <option value="exp">گران‌ترین</option>
-          <option value="pop">محبوب‌ترین</option>
-        </select>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="filter-toggle" id="filter-toggle" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+            فیلترها
+          </button>
+          <select id="f-sort" aria-label="مرتب‌سازی">
+            <option value="new">جدیدترین</option>
+            <option value="cheap">ارزان‌ترین</option>
+            <option value="exp">گران‌ترین</option>
+            <option value="pop">محبوب‌ترین</option>
+            <option value="sale">بیشترین تخفیف</option>
+          </select>
+        </div>
       </div>
       <div class="product-grid" id="shop-grid"></div>
       <div class="cart-empty" id="shop-empty" style="display:none">
         <div class="cart-empty__icon">🔍</div>
         <p>محصولی با این فیلترها پیدا نشد.</p>
+        <button class="btn btn-dark btn-sm" id="filter-clear-2" type="button">حذف فیلترها</button>
       </div>
-      <p id="shop-note" style="font-size:12.5px;color:var(--c-text-soft);margin-top:14px"></p>
+      <div class="load-more"><button class="btn btn-ghost" id="load-more" type="button">نمایش محصولات بیشتر</button></div>
     </div>
   </div>
 </Base>
 
-<script is:inline>
-  /* رندر کارت محصول سمت کلاینت (خواندن از LocalStorage تا تغییرات پنل دیده شود) */
-  (function () {
-    const base = document.querySelector('link[rel=icon]').getAttribute('href').replace('/favicon.svg', '');
-    const fa = (n) => new Intl.NumberFormat('fa-IR').format(n);
-    const catNames = {};
-    JSON.parse(localStorage.getItem('ps_categories') || '[]').forEach((c) => (catNames[c.id] = c.name));
-    const grid = document.getElementById('shop-grid');
-    const empty = document.getElementById('shop-empty');
-    const found = document.getElementById('found-count');
-
-    function cardHTML(p) {
-      const sale = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
-      return `
-      <article class="product-card">
-        <div class="product-card__media">
-          ${sale ? `<span class="badge badge--sale">٪${fa(sale)} تخفیف</span>` : p.featured ? '<span class="badge badge--new">جدید</span>' : ''}
-          ${p.stock <= 0 ? '<span class="badge badge--out">ناموجود</span>' : ''}
-          <a href="${base}/product/${p.slug}"><img src="${base}/assets/img/${p.images[0]}.webp" alt="${p.name}" loading="lazy"></a>
-          <div class="product-card__actions">
-            ${p.stock > 0 ? `<button class="add-btn" data-add="${p.id}">افزودن به سبد</button>` : '<button class="add-btn" disabled>ناموجود</button>'}
-          </div>
-        </div>
-        <div class="product-card__body">
-          <span class="product-card__cat">${catNames[p.category] || ''}</span>
-          <a href="${base}/product/${p.slug}"><h3 class="product-card__title">${p.name}</h3></a>
-          <div class="price"><span class="price__current">${p.oldPrice ? `<del>${fa(p.oldPrice)}</del>` : ''}${fa(p.price)}</span><span class="price__unit">تومان</span></div>
-          <div style="margin-top:6px;display:flex;justify-content:space-between"><span class="stars">${'★'.repeat(Math.round(p.rating))}${'☆'.repeat(5 - Math.round(p.rating))}</span><span class="product-card__cat">(${fa(p.reviewsCount)} نظر)</span></div>
-        </div>
-      </article>`;
-    }
-
-    function readFilters() {
-      const q = new URLSearchParams(location.search);
-      const cats = [...document.querySelectorAll('.f-cat:checked')].map((x) => x.value).filter((v) => v !== 'all');
-      if (!cats.length) { const c = q.get('cat'); if (c) cats.push(c); }
-      return {
-        q: q.get('q') || '',
-        cat: cats,
-        min: parseInt((document.getElementById('f-min').value || '0').replace(/[^\d]/g, '')) || 0,
-        max: parseInt((document.getElementById('f-max').value || '0').replace(/[^\d]/g, '')) || Infinity,
-        sizes: [...document.querySelectorAll('.f-size:checked')].map((x) => x.value),
-        sale: document.getElementById('f-sale').checked || q.get('sale') === '1',
-        sort: document.getElementById('f-sort').value,
-      };
-    }
-
-    function render() {
-      const f = readFilters();
-      let list = JSON.parse(localStorage.getItem('ps_products') || '[]').filter((p) => p.status === 'published');
-      if (f.q) list = list.filter((p) => (p.name + p.shortDesc + (p.tags || []).join()).includes(f.q));
-      if (f.cat.length) list = list.filter((p) => f.cat.includes((JSON.parse(localStorage.getItem('ps_categories') || '[]').find((c) => c.id === p.category) || {}).slug));
-      if (f.sale) list = list.filter((p) => p.oldPrice);
-      if (f.min) list = list.filter((p) => p.price >= f.min);
-      if (f.max !== Infinity) list = list.filter((p) => p.price <= f.max);
-      if (f.sizes.length) list = list.filter((p) => (p.sizes || []).some((s) => f.sizes.includes(s)));
-      if (f.sort === 'cheap') list.sort((a, b) => a.price - b.price);
-      else if (f.sort === 'exp') list.sort((a, b) => b.price - a.price);
-      else if (f.sort === 'pop') list.sort((a, b) => b.reviewsCount - a.reviewsCount);
-      else list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-      found.textContent = `${fa(list.length)} محصول یافت شد`;
-      grid.innerHTML = list.map(cardHTML).join('');
-      empty.style.display = list.length ? 'none' : 'block';
-      grid.querySelectorAll('[data-add]').forEach((b) =>
-        b.addEventListener('click', () => {
-          const id = b.dataset.add;
-          const p = JSON.parse(localStorage.getItem('ps_products')).find((x) => x.id === id);
-          window.__psAdd && window.__psAdd(id, undefined, 1, p.name);
-        })
-      );
-    }
-
-    document.querySelectorAll('.f-cat, .f-size, #f-sale').forEach((el) => el.addEventListener('change', render));
-    document.getElementById('f-apply').addEventListener('click', render);
-    document.getElementById('f-sort').addEventListener('change', render);
-    render();
-    document.getElementById('shop-note').textContent = 'نکته: در نسخه دمو، تغییرات محصول در پنل مدیریت بلافاصله در همین صفحه دیده می‌شود.';
-  })();
+<script>
+  import { initShop } from '../scripts/shop';
+  import { BASE } from '../lib/site';
+  const boot = () => initShop({ container: 'shop-grid' });
+  if (localStorage.getItem('ps_products') === null) {
+    fetch(`${BASE}/data/db.json`).then((r) => r.json()).then((s: any) => {
+      Object.entries({ products: 'ps_products', categories: 'ps_categories' }).forEach(([k, ls]) => localStorage.setItem(ls as string, JSON.stringify(s[k])));
+      boot();
+    });
+  } else boot();
+  document.getElementById('filter-clear-2')?.addEventListener('click', () => (document.getElementById('filter-clear') as HTMLElement)?.click());
 </script>

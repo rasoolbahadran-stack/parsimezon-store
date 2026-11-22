@@ -1,0 +1,97 @@
+---
+import Base from '../../layouts/Base.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { BASE, img, products, articles, dateFa, fa, articleToc, articleBodyWithIds } from '../../lib/site';
+
+export function getStaticPaths() {
+  return articles.map((a: any) => ({ params: { slug: a.slug }, props: { a } }));
+}
+const { a } = Astro.props as any;
+const related = articles.filter((x: any) => x.slug !== a.slug && x.category === a.category).slice(0, 2);
+const relatedAll = related.length ? related : articles.filter((x: any) => x.slug !== a.slug).slice(0, 2);
+/* محصولات لینک‌شده در متن */
+const mentionedSlugs = [...a.body.matchAll(/\[پ:(.+?)\]/g)].map((m: any) => m[1]);
+const mentioned = mentionedSlugs.map((s: string) => products.find((p: any) => p.slug === s)).filter(Boolean);
+const body = articleBodyWithIds(a.body);
+const toc = articleToc(a.body);
+
+const articleSchema = JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'Article',
+  headline: a.title, image: `https://rasoolbahadran-stack.github.io/parsimezon-store/assets/img/${a.cover}.webp`,
+  datePublished: a.date, author: { '@type': 'Organization', name: a.author },
+  publisher: { '@type': 'Organization', name: 'پارسی‌مزون' },
+  description: a.excerpt,
+});
+---
+
+<Base title={a.seo?.metaTitle || a.title} desc={a.seo?.metaDescription || a.excerpt}>
+  <script type="application/ld+json" set:html={articleSchema}></script>
+  <section class="article-hero">
+    <img src={img(a.cover)} alt={a.title} width="1280" height="720" fetchpriority="high" />
+    <div class="article-hero__body">
+      <div class="container" style="width:100%">
+        <span class="article-hero__cat">{a.category}</span>
+        <h1 class="article-hero__title">{a.title}</h1>
+      </div>
+    </div>
+  </section>
+
+  <div class="journal-layout">
+    <div class="container" style="width:100%">
+      <p class="breadcrumb" style="margin-top:14px"><a href={BASE + '/'}>خانه</a> / <a href={BASE + '/journal'}>مجله</a> / {a.title}</p>
+      <div class="article-meta">
+        <span>✍️ <b>{a.author}</b></span>
+        <span>📅 {dateFa(a.date)}</span>
+        <span>⏱️ {fa(a.readTime)} دقیقه مطالعه</span>
+      </div>
+
+      <article class="article-body" set:html={body} />
+
+      {mentioned.length ? (
+        <div style="margin-top:26px">
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:10px">محصولات مرتبط با این مقاله</h2>
+          {mentioned.map((p: any) => (
+            <div class="prose-product">
+              <a href={`${BASE}/product/${p.slug}`}><img src={img(p.images[0])} alt={p.name} loading="lazy" width="110" height="147" /></a>
+              <div>
+                <a class="prose-product__t" href={`${BASE}/product/${p.slug}`}>{p.name}</a>
+                <p class="prose-product__p">{fa(p.price)} تومان</p>
+              </div>
+              <a class="btn btn-dark btn-sm" href={`${BASE}/product/${p.slug}`}>مشاهده</a>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div style="border:1px solid var(--c-border);background:var(--c-ivory);padding:22px 24px;margin:26px 0">
+        <p style="font-weight:800;font-size:15px;margin-bottom:6px">آماده یک انتخاب درست‌تر هستید؟</p>
+        <p style="font-size:13px;color:var(--c-text-soft);margin-bottom:14px">کالکشن‌های تازه پارسی‌مزون را ببینید؛ انتخاب‌هایی با برش تمیز و پارچه درست.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn btn-primary btn-sm" href={BASE + '/shop'}>مشاهده فروشگاه</a>
+          <a class="btn btn-ghost btn-sm" href={BASE + '/journal/size-guide-online'}>راهنمای انتخاب سایز</a>
+        </div>
+      </div>
+    </div>
+
+    <aside class="container" style="width:100%">
+      <div style="position:sticky;top:calc(var(--header-h) + 14px)">
+        {toc.length > 2 && (
+          <div class="toc">
+            <p class="toc__t">فهرست مطالب</p>
+            {toc.map((h: any) => <a href={`#${h.id}`}>{h.text}</a>)}
+          </div>
+        )}
+        <div class="filter-box">
+          <p class="filter-box__t">مقالات مرتبط</p>
+          {relatedAll.map((x: any) => (
+            <a href={`${BASE}/journal/${x.slug}`} style="display:block;padding:8px 0;border-bottom:1px dashed var(--c-border)">
+              <span style="font-size:13px;font-weight:700">{x.title}</span>
+              <span style="display:block;font-size:11px;color:var(--c-text-soft)">{x.category} • {fa(x.readTime)} دقیقه</span>
+            </a>
+          ))}
+          <a class="link-underline" href={BASE + '/journal'} style="display:inline-block;margin-top:10px;color:var(--c-primary)">همه مقالات ←</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</Base>

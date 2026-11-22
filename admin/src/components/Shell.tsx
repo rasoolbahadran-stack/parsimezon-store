@@ -42,8 +42,10 @@ const NAV: { group: string; items: { href: string; label: string; icon: string }
     group: 'محتوا',
     items: [
       { href: '/content/pages', label: 'صفحات', icon: '📄' },
-      { href: '/content/posts', label: 'مقالات بلاگ', icon: '📝' },
-      { href: '/media', label: 'رسانه‌ها', icon: '🖼️' },
+      { href: '/content/posts', label: 'مقالات مجله', icon: '📝' },
+      { href: '/content/collections', label: 'کالکشن‌ها', icon: '🧥' },
+      { href: '/content/slides', label: 'بنرهای صفحه اصلی', icon: '🖼️' },
+      { href: '/media', label: 'رسانه‌ها', icon: '🗃️' },
     ],
   },
   {
@@ -165,6 +167,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 }
 
 function currentTitle(pathname: string) {
+  const clean = pathname.replace(/\/$/, '') || '/';
   const map: Record<string, string> = {
     '/': 'داشبورد',
     '/orders': 'مدیریت سفارش‌ها',
@@ -179,7 +182,9 @@ function currentTitle(pathname: string) {
     '/customers': 'مشتریان',
     '/marketing/coupons': 'کوپن‌های تخفیف',
     '/content/pages': 'مدیریت صفحات',
-    '/content/posts': 'مقالات بلاگ',
+    '/content/posts': 'مقالات مجله',
+    '/content/collections': 'مدیریت کالکشن‌ها',
+    '/content/slides': 'بنرهای صفحه اصلی (Hero)',
     '/media': 'کتابخانه رسانه',
     '/interactions/reviews': 'نظرات محصولات',
     '/interactions/messages': 'پیام‌ها',
@@ -187,7 +192,7 @@ function currentTitle(pathname: string) {
     '/users': 'کاربران و نقش‌ها',
     '/settings': 'تنظیمات',
   };
-  return map[pathname] || 'پنل مدیریت';
+  return map[clean] || 'پنل مدیریت';
 }
 
 function LoginScreen({ onOk }: { onOk: () => void }) {

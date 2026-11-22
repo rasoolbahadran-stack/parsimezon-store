@@ -1,5 +1,8 @@
 ---
-import { BASE, categories } from '../lib/site';
+import { BASE, categories, articles } from '../lib/site';
+const navCats = categories.slice(0, 10);
+const moreCats = categories.slice(10);
+const featImg = articles[0]?.cover || 'banner101';
 ---
 
 <header class="site-header">
@@ -9,49 +12,85 @@ import { BASE, categories } from '../lib/site';
     </button>
     <a class="logo" href={BASE + '/'}>
       <svg class="logo__mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
-        <rect width="48" height="48" rx="8" fill="#ED1844"/>
+        <rect width="48" height="48" rx="2" fill="#161412"/>
         <path d="M14 34V14h4v10h4V14h4v20h-4v-6h-4v6h-4z" fill="#fff"/>
-        <circle cx="34" cy="17" r="4" fill="#FBBC34"/>
+        <circle cx="34" cy="17" r="4" fill="#ED1844"/>
       </svg>
       <span class="logo__text">پارسی<i>مزون</i></span>
     </a>
     <nav class="main-nav" aria-label="منوی اصلی">
       <ul>
-        <li><a href={BASE + '/shop'}>فروشگاه</a></li>
+        <li><a href={BASE + '/'}>خانه</a></li>
         <li class="has-sub">
-          <a href={BASE + '/shop'}>دسته‌بندی‌ها</a>
+          <a href={BASE + '/shop'}>فروشگاه</a>
           <div class="mega">
-            <p class="mega__title">همه دسته‌بندی‌های پارسی‌مزون</p>
-            {categories.map((c: any) => (
-              <a href={`${BASE}/shop?cat=${c.slug}`}>{c.name}</a>
-            ))}
+            <div class="mega__col">
+              <p class="mega__title">دسته‌بندی اصلی</p>
+              {navCats.slice(0, 7).map((c: any) => (
+                <a class="mega__row" href={`${BASE}/category/${c.slug}`} style="display:flex;justify-content:space-between">
+                  <span>{c.name}</span><small>←</small>
+                </a>
+              ))}
+            </div>
+            <div class="mega__col">
+              <p class="mega__title">همه دسته‌ها</p>
+              <div class="mega__list">
+                {navCats.slice(7).map((c: any) => <a href={`${BASE}/category/${c.slug}`}>{c.name}</a>)}
+                {moreCats.map((c: any) => <a href={`${BASE}/category/${c.slug}`}>{c.name}</a>)}
+                <a href={`${BASE}/shop?sale=1`}><b style="color:var(--c-primary)">تخفیف‌های ویژه</b></a>
+              </div>
+            </div>
+            <div class="mega__col">
+              <a class="mega__feature" href={`${BASE}/shop`}>
+                <img src={`${BASE}/assets/img/${featImg}.webp`} alt="کالکشن منتخب پارسی‌مزون" loading="lazy" width="240" height="300" />
+                <span>کالکشن زمستان پایتخت</span>
+                <em>مشاهده کالکشن ←</em>
+              </a>
+            </div>
           </div>
         </li>
         <li class="has-sub">
-          <a href={BASE + '/blog'}>مجله</a>
-          <div class="mega">
-            <p class="mega__title">مقالات راهنمای خرید و استایل</p>
-            <a href={BASE + '/blog/evening-dress-body-guide'}>راهنمای انتخاب پیراهن مجلسی</a>
-            <a href={BASE + '/blog/how-to-choose-wool-coat'}>پالتو پشمی خوب را بشناسید</a>
-            <a href={BASE + '/blog/color-matching-rules'}>اصول ترکیب رنگ در استایل</a>
+          <a href={BASE + '/journal'}>مجله</a>
+          <div class="mega" style="grid-template-columns:1fr 1fr">
+            <div class="mega__col">
+              <p class="mega__title">مقالات منتخب استایل</p>
+              {articles.slice(0, 5).map((a: any) => <a href={`${BASE}/journal/${a.slug}`}>{a.title}</a>)}
+            </div>
+            <div class="mega__col">
+              <a class="mega__feature" href={`${BASE}/journal/${articles[0]?.slug}`}>
+                <img src={`${BASE}/assets/img/${articles[0]?.cover}.webp`} alt={articles[0]?.title} loading="lazy" width="240" height="300" />
+                <span>{articles[0]?.title}</span>
+                <em>مطالعه مقاله ←</em>
+              </a>
+            </div>
           </div>
         </li>
+        <li><a href={BASE + '/shop?sale=1'}>تخفیف‌ها</a></li>
         <li><a href={BASE + '/about'}>درباره ما</a></li>
-        <li><a href={BASE + '/contact'}>تماس با ما</a></li>
+        <li><a href={BASE + '/contact'}>تماس</a></li>
       </ul>
     </nav>
     <div class="header-tools">
-      <form class="header-search" id="header-search-form">
-        <input id="header-search-input" type="search" placeholder="جست‌وجوی محصول…" aria-label="جست‌وجو" />
-        <button type="submit" aria-label="جست‌وجو">
+      <form class="header-search" id="header-search-form" autocomplete="off">
+        <input id="header-search-input" type="search" placeholder="جستجوی محصول…" aria-label="جستجو" />
+        <button type="submit" aria-label="جستجو">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
         </button>
+        <div class="search-suggest" id="search-suggest"></div>
       </form>
+      <a class="h-tool" href={BASE + '/wishlist'} aria-label="علاقه‌مندی‌ها">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7.5-4.6-9.5-9A5.5 5.5 0 0 1 12 6.3 5.5 5.5 0 0 1 21.5 12c-2 4.4-9.5 9-9.5 9z"/></svg>
+        <span class="badge-count" data-wish-count style="display:none">۰</span>
+      </a>
+      <a class="h-tool" href={BASE + '/compare'} aria-label="مقایسه محصولات">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v18M16 3v18M3 8l5-5 5 5M21 16l-5 5-5-5"/></svg>
+        <span class="badge-count" data-compare-count style="display:none">۰</span>
+      </a>
       <a class="h-tool" href={BASE + '/account'} aria-label="حساب کاربری">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
       </a>
       <button class="h-tool" data-open-cart aria-label="سبد خرید">
-        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l1.2 12.2a1 1 0 0 1-1 1.1H5.8a1 1 0 0 1-1-1.1L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h12l1.2 12.2a1 1 0 0 1-1 1.1H5.8a1 1 0 0 1-1-1.1L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>
         <span class="badge-count" data-cart-count>۰</span>
       </button>
     </div>

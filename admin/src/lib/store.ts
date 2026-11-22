@@ -17,6 +17,9 @@ const SEED_MAP: Record<string, any[]> = {
   ps_pages: seed.pages,
   ps_users: seed.users,
   ps_roles: seed.roles,
+  ps_collections: seed.collections,
+  ps_slides: seed.slides,
+  ps_articles: seed.articles,
 };
 
 export function lsGet(key: string, fallback: any = null): any {
@@ -105,8 +108,14 @@ export const ORDER_STATUSES = [
 ] as const;
 export const statusOf = (id: string) => ORDER_STATUSES.find((s) => s.id === id) || { id, name: id, cls: 'pill--muted' };
 
-/* گالری تصاویر ریپو (نسخه دمو بدون بک‌اند) */
-export const REPO_IMAGES = seed.products.map((p) => p.images[0]).concat(['hero1', 'hero2', 'blog1', 'blog2', 'blog3', 'about1']);
+/* گالری تصاویر ریپو (نسخه دمو بدون بک‌اند) — همه تصاویر v2 + لگاسی */
+export const REPO_IMAGES: string[] = Array.from(new Set<string>([
+  ...seed.products.flatMap((p: any) => p.images || []),
+  ...seed.collections.map((c: any) => c.image),
+  ...seed.slides.map((s: any) => s.image),
+  ...seed.articles.map((a: any) => a.cover),
+  'hero1', 'hero2', 'blog1', 'blog2', 'blog3', 'about1', 'p1', 'p2', 'p10', 'p11', 'p12',
+]));
 export const IMG_BASE = '/parsimezon-store/assets/img';
 
 /* ابزار وضعیت ورود دمو */

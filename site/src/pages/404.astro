@@ -3,15 +3,16 @@ import Base from '../layouts/Base.astro';
 import { BASE } from '../lib/site';
 ---
 
-<Base title="صفحه پیدا نشد" desc="صفحه موردنظر یافت نشد">
+<Base title="صفحه پیدا نشد" desc="صفحه موردنظر یافت نشد" noindex>
   <div class="container">
-    <div class="cart-empty" style="padding:90px 20px">
-      <div class="cart-empty__icon">🧭</div>
-      <h1 style="font-size:40px; font-weight:900; margin:10px 0">۴۰۴</h1>
-      <p>صفحه‌ای که دنبالش بودید پیدا نشد.</p>
-      <div style="display:flex; gap:10px; justify-content:center; margin-top:18px">
+    <div class="notfound">
+      <p class="notfound__num">۴۰۴</p>
+      <h1 class="notfound__t">این صفحه در کمد ما نیست</h1>
+      <p>شاید لینک تغییر کرده یا صفحه حذف شده است؛ اما کالکشن‌های تازه ما همان‌جایی هستند که باید.</p>
+      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap">
         <a class="btn btn-primary" href={BASE + '/'}>صفحه اصلی</a>
-        <a class="btn btn-default" href={BASE + '/shop'}>فروشگاه</a>
+        <a class="btn btn-ghost" href={BASE + '/shop'}>فروشگاه</a>
+        <a class="btn btn-default" href={BASE + '/journal'}>مجله استایل</a>
       </div>
     </div>
   </div>

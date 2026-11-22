@@ -1,0 +1,70 @@
+---
+import Base from '../../layouts/Base.astro';
+import { BASE, img, articles, journalCats, fa, dateFa } from '../../lib/site';
+
+const featured = articles[0];
+const rest = articles.slice(1);
+const covers: Record<string, number> = {};
+articles.forEach((a: any) => (covers[a.category] = (covers[a.category] || 0) + 1));
+---
+
+<Base title="مجله پارسی‌مزون" desc="مقالات استایل، راهنمای خرید، مراقبت از لباس و کمد کپسولی؛ مجله مد پارسی‌مزون با محتوای کاربردی فارسی.">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">مجله پارسی‌مزون</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / مجله</p>
+    </div>
+  </section>
+
+  <!-- مقاله شاخص -->
+  <section class="section" style="padding-top:clamp(20px,3vw,36px)">
+    <div class="container">
+      <a class="article-hero reveal" href={`${BASE}/journal/${featured.slug}`}>
+        <img src={img(featured.cover)} alt={featured.title} width="1280" height="720" fetchpriority="high" />
+        <div class="article-hero__body">
+          <span class="article-hero__cat">{featured.category} • مقاله ویژه هفته</span>
+          <h2 class="article-hero__title">{featured.title}</h2>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- فیلتر دسته‌بندی -->
+  <div class="container">
+    <div class="cat-chips" id="journal-chips">
+      <button class="cat-chip is-active" data-cat="all">همه ({fa(articles.length)})</button>
+      {journalCats.map((c: string) => <button class="cat-chip" data-cat={c}>{c} ({fa(covers[c] || 0)})</button>)}
+    </div>
+  </div>
+
+  <!-- آرشیو مقالات -->
+  <section class="section" style="padding-top:22px">
+    <div class="container">
+      <div class="blog-grid" id="journal-grid">
+        {rest.map((a: any) => (
+          <a class="blog-card reveal journal-item" data-cat={a.category} href={`${BASE}/journal/${a.slug}`}>
+            <img src={img(a.cover)} alt={a.title} loading="lazy" width="800" height="533" />
+            <div class="blog-card__body">
+              <p class="blog-card__meta"><em>{a.category}</em> • {dateFa(a.date)} • {fa(a.readTime)} دقیقه مطالعه</p>
+              <h3 class="blog-card__title">{a.title}</h3>
+              <p style="font-size:12.5px;color:var(--c-text-soft);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">{a.excerpt}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script is:inline>
+  document.getElementById('journal-chips')?.addEventListener('click', (e) => {
+    const b = e.target.closest('.cat-chip');
+    if (!b) return;
+    document.querySelectorAll('#journal-chips .cat-chip').forEach((x) => x.classList.remove('is-active'));
+    b.classList.add('is-active');
+    const cat = b.getAttribute('data-cat');
+    document.querySelectorAll('.journal-item').forEach((el) => {
+      el.style.display = cat === 'all' || el.getAttribute('data-cat') === cat ? '' : 'none';
+    });
+  });
+</script>

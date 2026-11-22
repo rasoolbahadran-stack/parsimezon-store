@@ -1,0 +1,61 @@
+---
+import Base from '../layouts/Base.astro';
+import { BASE } from '../lib/site';
+---
+
+<Base title="مقایسه محصولات" desc="مقایسه ویژگی‌ها، قیمت و سایز محصولات انتخابی شما در پارسی‌مزون">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">مقایسه محصولات</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / مقایسه</p>
+    </div>
+  </section>
+  <div class="container" style="padding:clamp(24px,3vw,40px) 0">
+    <div style="overflow-x:auto" id="compare-wrap"></div>
+    <div class="cart-empty" id="cmp-empty" style="display:none">
+      <div class="cart-empty__icon">⚖️</div>
+      <p>محصولی برای مقایسه انتخاب نشده است.</p>
+      <p style="font-size:12.5px">از آیکون مقایسه در کارت محصولات استفاده کنید (حداکثر ۴ محصول).</p>
+      <a class="btn btn-dark btn-sm" href={BASE + '/shop'} style="margin-top:12px">شروع خرید</a>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { load, LS, cartTotals, money } from '../lib/store';
+  const base = document.documentElement.dataset.base || '';
+  function render() {
+    const ids = load<string[]>(LS.compare, []);
+    const products = load<any[]>(LS.products, []).filter((p) => ids.includes(p.id));
+    const cats = load<any[]>(LS.categories, []);
+    const brands = load<any[]>(LS.brands, []);
+    const wrap = document.getElementById('compare-wrap');
+    (document.getElementById('cmp-empty') as HTMLElement).style.display = products.length ? 'none' : 'block';
+    if (!products.length) { wrap.innerHTML = ''; return; }
+    const fa = new Intl.NumberFormat('fa-IR');
+    const row = (label: string, fn: (p: any) => string) =>
+      `<tr><th>${label}</th>${products.map((p) => `<td>${fn(p)}</td>`).join('')}</tr>`;
+    wrap.innerHTML = `
+    <table class="compare-table">
+      ${row('محصول', (p) => `<a href="${base}/product/${p.slug}"><img src="${base}/assets/img/${p.images[0]}.webp" alt="${p.name}" loading="lazy"></a><p style="font-weight:700;margin-top:8px">${p.name}</p><button class="btn btn-sm btn-default" data-cmp-rm="${p.id}" style="margin-top:8px">حذف</button>`)}
+      ${row('قیمت', (p) => `<b>${fa.format(p.price)}</b> تومان ${p.oldPrice ? `<del style="color:var(--c-text-soft);font-size:11px">${fa.format(p.oldPrice)}</del>` : ''}`)}
+      ${row('دسته‌بندی', (p) => (cats.find((c) => c.id === p.category) || {}).name || '')}
+      ${row('برند', (p) => (brands.find((b) => b.id === p.brand) || {}).name || '')}
+      ${row('رنگ‌ها', (p) => (p.colors || []).join('، '))}
+      ${row('سایزها', (p) => (p.sizes || []).join('، '))}
+      ${row('جنس', (p) => (p.specs || {})['جنس'] || '—')}
+      ${row('نگهداری', (p) => (p.specs || {})['شست‌وشو'] || '—')}
+      ${row('امتیاز', (p) => `${'★'.repeat(Math.round(p.rating))} ${fa.format(p.rating)}`)}
+      ${row('موجودی', (p) => p.stock > 0 ? `${fa.format(p.stock)} عدد` : 'ناموجود')}
+      ${row('خرید', (p) => p.stock > 0 ? `<button class="btn btn-primary btn-sm" data-add="${p.id}">افزودن به سبد</button>` : '<span style="color:var(--c-text-soft)">ناموجود</span>')}
+    </table>`;
+    wrap.querySelectorAll('[data-cmp-rm]').forEach((b) =>
+      b.addEventListener('click', () => {
+        window.__psStore.toggleCompare(b.getAttribute('data-cmp-rm'));
+        render();
+      })
+    );
+  }
+  render();
+  (window as any).__psRefreshCompare = render;
+</script>

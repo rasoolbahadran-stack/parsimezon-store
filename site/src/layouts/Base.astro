@@ -1,14 +1,29 @@
 ---
 import '../styles/global.css';
-import { BASE, settings } from '../lib/site';
+import { BASE, settings, categories, articles as seedJournal } from '../lib/site';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import seed from '../../../shared/seed.json';
 
-const { title, desc } = Astro.props as any;
-const fullTitle = title ? `${title} | ${settings.siteName}` : `${settings.siteName} — ${settings.tagline}`;
-const canonical = Astro.url.pathname;
-const path = Astro.props?.path ?? canonical;
+const { title, desc, noindex } = Astro.props as any;
+const fullTitle = title ? `${title} | ${settings.siteName}` : `${settings.siteName} | ${settings.tagline}`;
+const canonical = `https://rasoolbahadran-stack.github.io/parsimezon-store${Astro.url.pathname}`;
+const ogImage = `https://rasoolbahadran-stack.github.io/parsimezon-store/assets/img/banner203.webp`;
+
+const orgSchema = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: settings.siteName,
+  url: 'https://rasoolbahadran-stack.github.io/parsimezon-store/',
+  logo: 'https://rasoolbahadran-stack.github.io/parsimezon-store/favicon.svg',
+  contactPoint: { '@type': 'ContactPoint', telephone: settings.phone, contactType: 'customer service', availableLanguage: 'fa' },
+});
+const siteSchema = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: settings.siteName,
+  url: 'https://rasoolbahadran-stack.github.io/parsimezon-store/',
+  potentialAction: { '@type': 'SearchAction', target: 'https://rasoolbahadran-stack.github.io/parsimezon-store/shop?q={search_term_string}', 'query-input': 'required name=search_term_string' },
+});
 ---
 
 <!doctype html>
@@ -18,14 +33,25 @@ const path = Astro.props?.path ?? canonical;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={desc || settings.tagline} />
-    <link rel="canonical" href={`https://rasoolbahadran-stack.github.io/parsimezon-store${canonical}`} />
+    <meta name="robots" content={noindex ? 'noindex,follow' : 'index,follow'} />
+    <link rel="canonical" href={canonical} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={desc || settings.tagline} />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={settings.siteName} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="fa_IR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={desc || settings.tagline} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="theme-color" content="#161412" />
     <link rel="icon" href={`${BASE}/favicon.svg`} type="image/svg+xml" />
     <link rel="preload" href={`${BASE}/assets/fonts/Vazirmatn-Regular.woff2`} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={`${BASE}/assets/fonts/Vazirmatn-Bold.woff2`} as="font" type="font/woff2" crossorigin />
+    <script type="application/ld+json" set:html={orgSchema}></script>
+    <script type="application/ld+json" set:html={siteSchema}></script>
   </head>
   <body>
     <div class="promo-bar">
@@ -49,6 +75,7 @@ const path = Astro.props?.path ?? canonical;
       <div class="cart-drawer__items" id="cart-drawer-items"></div>
       <div class="cart-drawer__foot">
         <p class="cart-line__v" id="cart-ship-note"></p>
+        <div class="cart-ship-track"><i id="cart-ship-bar"></i></div>
         <div class="cart-drawer__total">
           <span>مجموع:</span>
           <span id="cart-drawer-total">۰ تومان</span>
@@ -57,50 +84,100 @@ const path = Astro.props?.path ?? canonical;
       </div>
     </aside>
 
+    <!-- منوی موبایل -->
     <nav class="mobile-nav" id="mobile-nav" aria-label="منوی موبایل">
-      <p class="footer-col__t" style="color:#333">دسته‌بندی‌ها</p>
-      {seed.categories.map((c: any) => <a href={`${BASE}/shop?cat=${c.slug}`} onClick="document.getElementById('mobile-nav').classList.remove('is-open')">{c.name}</a>)}
-      <p class="footer-col__t" style="color:#333">دسترسی سریع</p>
+      <div class="mobile-nav__head">
+        <span style="font-weight:800">منو</span>
+        <button id="mobile-nav-close" aria-label="بستن" style="font-size:18px">✕</button>
+      </div>
+      <a href={`${BASE}/`}>صفحه اصلی</a>
+      <div class="mobile-nav__acc">
+        <button type="button">دسته‌بندی‌ها</button>
+        <div class="sub">
+          {categories.map((c: any) => <a href={`${BASE}/category/${c.slug}`}>{c.name}</a>)}
+          <a href={`${BASE}/shop`}>همه محصولات</a>
+        </div>
+      </div>
+      <div class="mobile-nav__acc">
+        <button type="button">مجله پارسی‌مزون</button>
+        <div class="sub">
+          <a href={`${BASE}/journal`}>همه مقالات</a>
+          {seedJournal.slice(0, 4).map((a: any) => <a href={`${BASE}/journal/${a.slug}`}>{a.title}</a>)}
+        </div>
+      </div>
+      <a href={`${BASE}/shop?sale=1`}>تخفیف‌های ویژه</a>
       <a href={`${BASE}/about`}>درباره ما</a>
       <a href={`${BASE}/contact`}>تماس با ما</a>
-      <a href={`${BASE}/blog`}>مجله پارسی‌مزون</a>
+      <a href={`${BASE}/faq`}>سوالات متداول</a>
+      <a href={`${BASE}/wishlist`}>علاقه‌مندی‌ها</a>
+      <a href={`${BASE}/compare`}>مقایسه محصولات</a>
       <a href={`${BASE}/account`}>حساب کاربری</a>
     </nav>
 
-    <!-- بوت‌استرپ داده دمو + اسکریپت مشترک -->
-    <script type="application/json" id="ps-seed" set:html={JSON.stringify(seed)}></script>
+    <!-- مودال Quick View -->
+    <div class="quickview" id="quickview" role="dialog" aria-label="مشاهده سریع">
+      <div class="quickview__box">
+        <button class="quickview__close" data-close-modal="quickview" aria-label="بستن">✕</button>
+        <div class="quickview__body"></div>
+      </div>
+    </div>
+
+    <!-- مودال جستجو (موبایل/دسکتاپ) -->
+    <div class="search-modal" id="search-modal" role="dialog" aria-label="جستجو">
+      <div class="search-modal__head">
+        <form>
+          <input id="search-modal-input" type="search" placeholder="جستجوی محصول… (مثلا پالتو، شومیز، بافت)" />
+        </form>
+        <button id="search-modal-close" aria-label="بستن" style="font-size:20px">✕</button>
+      </div>
+      <div class="search-suggest is-open" id="search-modal-suggest" style="position:static;border:none;box-shadow:none;display:block"></div>
+    </div>
+
+    <!-- ناوبری پایین موبایل -->
+    <nav class="bottom-nav" aria-label="ناوبری سریع">
+      <a href={`${BASE}/`} aria-label="خانه">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1v-10.5z"/></svg>
+        <span>خانه</span>
+      </a>
+      <a href={`${BASE}/shop`} aria-label="فروشگاه">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        <span>فروشگاه</span>
+      </a>
+      <button id="search-open" aria-label="جستجو" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--c-text-soft)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <span>جستجو</span>
+      </button>
+      <a href={`${BASE}/wishlist`} aria-label="علاقه‌مندی‌ها">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7.5-4.6-9.5-9A5.5 5.5 0 0 1 12 6.3 5.5 5.5 0 0 1 21.5 12c-2 4.4-9.5 9-9.5 9z"/></svg>
+        <span>علاقه‌مندی</span>
+        <span class="badge-count" data-wish-count style="display:none">۰</span>
+      </a>
+      <button data-open-cart aria-label="سبد خرید" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10px;color:var(--c-text-soft)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 7h12l1.2 12.2a1 1 0 0 1-1 1.1H5.8a1 1 0 0 1-1-1.1L6 7z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>
+        <span>سبد خرید</span>
+        <span class="badge-count" data-cart-count>۰</span>
+      </button>
+    </nav>
+
+    <!-- بوت‌استرپ داده دمو از db.json + اسکریپت مشترک -->
     <script>
       import { bootShared, load, save } from '../lib/store';
-      /* بوت‌استرپ: پر کردن LocalStorage از seed (فقط بار اول) */
-      const seedEl = document.getElementById('ps-seed');
-      if (seedEl) {
-        const s = JSON.parse(seedEl.textContent || '{}');
-        const keys = { products: 'ps_products', categories: 'ps_categories', brands: 'ps_brands', coupons: 'ps_coupons', reviews: 'ps_reviews', orders: 'ps_orders', customers: 'ps_customers', settings: 'ps_settings' } as const;
-        Object.entries(keys).forEach(([k, ls]) => {
-          if (localStorage.getItem(ls) === null && (s as any)[k]) save(ls, (s as any)[k]);
-        });
+      import { BASE } from '../lib/site';
+      const keys = { products: 'ps_products', categories: 'ps_categories', brands: 'ps_brands', coupons: 'ps_coupons', reviews: 'ps_reviews', orders: 'ps_orders', customers: 'ps_customers', settings: 'ps_settings', articles: 'ps_articles' } as const;
+      const boot = () => {
+        bootShared((document.documentElement.dataset.base = document.querySelector('link[rel=icon]')!.getAttribute('href')!.replace('/favicon.svg', '')));
+      };
+      if (localStorage.getItem('ps_products') === null) {
+        fetch(`${BASE}/data/db.json`)
+          .then((r) => r.json())
+          .then((s: any) => {
+            Object.entries(keys).forEach(([k, ls]) => { if (s[k]) save(ls, s[k]); });
+            boot();
+          })
+          .catch(boot);
+      } else {
+        boot();
       }
-      bootShared((document.documentElement.dataset.base = document.querySelector('link[rel=icon]')!.getAttribute('href')!.replace('/favicon.svg', '')));
-      /* منوی موبایل */
-      document.getElementById('burger')?.addEventListener('click', () => {
-        document.getElementById('mobile-nav')?.classList.add('is-open');
-        (document.getElementById('drawer-backdrop') as HTMLElement).classList.add('is-open');
-      });
-      document.getElementById('mobile-nav')?.addEventListener('click', (e) => {
-        if ((e.target as HTMLElement).tagName === 'A') {
-          document.getElementById('mobile-nav')?.classList.remove('is-open');
-          document.getElementById('drawer-backdrop')?.classList.remove('is-open');
-        }
-      });
-    </script>
-    <script is:inline>
-      /* جست‌وجوی هدر */
-      document.getElementById('header-search-form')?.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const q = (document.getElementById('header-search-input') as HTMLInputElement)?.value?.trim();
-        const base = document.querySelector('link[rel=icon]')!.getAttribute('href')!.replace('/favicon.svg', '');
-        if (q) window.location.href = base + '/shop?q=' + encodeURIComponent(q);
-      });
     </script>
   </body>
 </html>

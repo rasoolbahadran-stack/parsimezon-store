@@ -4,6 +4,7 @@ import { BASE, fa, shippingMethods } from '../lib/site';
 ---
 
 <Base title="تسویه حساب" desc="تکمیل اطلاعات و ثبت سفارش در پارسی‌مزون">
+  <script type="application/json" id="ps-ship" set:html={JSON.stringify(shippingMethods)}></script>
   <section class="page-head">
     <div class="container">
       <h1 class="page-head__t">تسویه حساب</h1>
@@ -78,7 +79,7 @@ import { BASE, fa, shippingMethods } from '../lib/site';
     const fa = (n) => new Intl.NumberFormat('fa-IR').format(n);
     const products = JSON.parse(localStorage.getItem('ps_products') || '[]');
     const settings = JSON.parse(localStorage.getItem('ps_settings') || '{}');
-    const ships = JSON.parse(JSON.stringify({ methods: JSON.parse(JSON.stringify(JSON.parse(document.getElementById('ps-seed').textContent).shippingMethods)) })).methods || JSON.parse(document.getElementById('ps-seed').textContent).shippingMethods;
+    const ships = JSON.parse(document.getElementById('ps-ship').textContent);
     const lines = JSON.parse(localStorage.getItem('ps_cart') || '[]');
     const ctx = JSON.parse(sessionStorage.getItem('ps_checkout_ctx') || '{}');
 

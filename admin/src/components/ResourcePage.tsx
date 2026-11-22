@@ -1,7 +1,7 @@
 'use client';
 /* موتور CRUD عمومی پنل — یک پیکربندی برای هر منبع (منبع‌محور)، برای استفاده مجدد در پروژه‌های مختلف */
 import { useEffect, useMemo, useState } from 'react';
-import { list, upsert, remove, nextId, faNum } from '@/lib/store';
+import { list, upsert, remove, nextId, faNum, REPO_IMAGES } from '@/lib/store';
 import { Modal, ConfirmDelete, toast, Field, TextField, TextArea, Select, usePaged, Pager, type Field as _F } from '@/lib/ui';
 
 export type FieldType = 'text' | 'number' | 'money' | 'textarea' | 'select' | 'toggle' | 'image' | 'date' | 'list';
@@ -199,7 +199,6 @@ export function EntityForm({ title, fields, initial, onClose, onSubmit }: { titl
 /* انتخاب تصویر از گالری ریپو + پیش‌نمایش */
 export function ImageField({ name, defaultValue }: { name: string; defaultValue: string }) {
   const [val, setVal] = useState(defaultValue);
-  const imgs = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9', 'p10', 'p11', 'p12', 'hero1', 'hero2', 'blog1', 'blog2', 'blog3', 'about1'];
   return (
     <div>
       <input type="hidden" name={name} value={val} />
@@ -209,7 +208,7 @@ export function ImageField({ name, defaultValue }: { name: string; defaultValue:
         ) : null}
         <select className="input" style={{ maxWidth: 220 }} value={val} onChange={(e) => setVal(e.target.value)}>
           <option value="">انتخاب تصویر…</option>
-          {imgs.map((i) => (
+          {REPO_IMAGES.map((i) => (
             <option key={i} value={i}>{i}</option>
           ))}
         </select>

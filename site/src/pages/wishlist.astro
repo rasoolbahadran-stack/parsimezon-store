@@ -1,0 +1,64 @@
+---
+import Base from '../layouts/Base.astro';
+import { BASE } from '../lib/site';
+---
+
+<Base title="علاقه‌مندی‌ها" desc="لیست علاقه‌مندی‌های شما در پارسی‌مزون">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">علاقه‌مندی‌های من</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / علاقه‌مندی‌ها</p>
+    </div>
+  </section>
+  <div class="container" style="padding:clamp(24px,3vw,40px) 0">
+    <div class="page-tools">
+      <span class="shop-toolbar__found" id="wish-count"></span>
+    </div>
+    <div class="product-grid" id="wish-grid"></div>
+    <div class="cart-empty" id="wish-empty" style="display:none">
+      <div class="cart-empty__icon">♥</div>
+      <p>لیست علاقه‌مندی‌های شما خالی است.</p>
+      <p style="font-size:12.5px">روی آیکون قلب در کارت محصولات بزنید تا اینجا ذخیره شود.</p>
+      <a class="btn btn-dark btn-sm" href={BASE + '/shop'} style="margin-top:12px">شروع خرید</a>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import { load, LS } from '../lib/store';
+  const base = document.documentElement.dataset.base || '';
+  function render() {
+    const ids = load<string[]>(LS.wishlist, []);
+    const products = load<any[]>(LS.products, []).filter((p) => ids.includes(p.id));
+    const grid = document.getElementById('wish-grid');
+    const fa = new Intl.NumberFormat('fa-IR');
+    document.getElementById('wish-count')!.textContent = `${fa.format(products.length)} محصول`;
+    (document.getElementById('wish-empty') as HTMLElement).style.display = products.length ? 'none' : 'block';
+    grid.innerHTML = products.map((p) => {
+      const off = p.oldPrice ? Math.round((1 - p.price / p.oldPrice) * 100) : 0;
+      return `
+      <article class="product-card">
+        <div class="product-card__media">
+          ${off ? `<span class="badge badge--sale">٪${fa.format(off)} تخفیف</span>` : p.isNew ? '<span class="badge badge--new">جدید</span>' : ''}
+          <a href="${base}/product/${p.slug}"><img src="${base}/assets/img/${p.images[0]}.webp" alt="${p.name}" loading="lazy"></a>
+          <div class="product-card__actions">
+            <button class="add-btn" data-add="${p.id}">افزودن به سبد</button>
+            <button class="qv-btn" data-wish-remove="${p.id}">حذف ✕</button>
+          </div>
+        </div>
+        <div class="product-card__body">
+          <a href="${base}/product/${p.slug}"><h3 class="product-card__title">${p.name}</h3></a>
+          <div class="price"><span class="price__current">${p.oldPrice ? `<del>${fa.format(p.oldPrice)}</del>` : ''}${fa.format(p.price)}</span><span class="price__unit">تومان</span></div>
+        </div>
+      </article>`;
+    }).join('');
+    grid.querySelectorAll('[data-wish-remove]').forEach((b) =>
+      b.addEventListener('click', () => {
+        window.__psStore.toggleWishlist(b.getAttribute('data-wish-remove'));
+        render();
+      })
+    );
+  }
+  render();
+  (window as any).__psRefreshWishlist = render;
+</script>

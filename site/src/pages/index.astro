@@ -1,93 +1,121 @@
 ---
 import Base from '../layouts/Base.astro';
 import ProductCard from '../components/ProductCard.astro';
-import { BASE, img, products, categories, posts, fa, money } from '../lib/site';
+import { BASE, img, products, categories, collections, articles, slides, fa } from '../lib/site';
 
-const featured = products.filter((p: any) => p.featured);
-const news = [...products].sort((a: any, b: any) => b.createdAt.localeCompare(a.createdAt)).slice(0, 8);
-const sale = products.filter((p: any) => p.oldPrice);
+const pub = products.filter((p: any) => p.status === 'published');
+const news = [...pub].sort((a: any, b: any) => b.createdAt.localeCompare(a.createdAt)).slice(0, 8);
+const best = pub.filter((p: any) => p.bestseller).slice(0, 8);
+const sale = pub.filter((p: any) => p.oldPrice).slice(0, 8);
+const topCats = categories.slice(0, 10);
 const catCounts: Record<string, number> = {};
-products.forEach((p: any) => (catCounts[p.category] = (catCounts[p.category] || 0) + 1));
+pub.forEach((p: any) => (catCounts[p.category] = (catCounts[p.category] || 0) + 1));
+
+/* استایل پیشنهادی: یک ترکیب کامل از کالکشن مینیمال */
+const lookCol = collections.find((c: any) => c.slug === 'minimal');
+const lookProducts = (lookCol?.products || []).slice(0, 4).map((s: string) => products.find((p: any) => p.slug === s)).filter(Boolean);
+const hotspots = [
+  { x: 34, y: 30 }, { x: 55, y: 52 }, { x: 40, y: 74 }, { x: 68, y: 38 },
+];
+const featArticles = articles.slice(0, 3);
+const sideArticles = articles.slice(3, 5);
 ---
 
-<Base desc="بوتیک آنلاین پارسی‌مزون؛ خرید پیراهن مجلسی و روزمره، پالتو پشمی، ست و بلوز بافت با ارسال سریع به سراسر کشور">
-  <!-- هیرو اسلایدر -->
-  <section class="hero" id="hero">
+<Base desc="پارسی‌مزون؛ بوتیک آنلاین پوشاک زنانه با کالکشن‌های زمستان، استایل مینیمال و لباس مجلسی. ارسال سریع به سراسر کشور، ۷ روز ضمانت بازگشت.">
+  <!-- هیرو اسلایدر Editorial -->
+  <section class="hero" id="hero" aria-label="کالکشن‌های ویژه">
     <div class="hero__slides" id="hero-slides">
-      <div class="hero__slide">
-        <img src={img('hero1')} alt="کالکشن پاییز پارسی‌مزون" width="1600" height="900" fetchpriority="high" />
-        <div class="hero__content">
-          <p class="hero__tag">کالکشن جدید</p>
-          <h2 class="hero__title">شیک‌پوشِ فصل خودت باش</h2>
-          <p class="hero__sub">تازه‌ترین پیراهن‌های مجلسی و پالتوهای پشمی با تا ٪۲۵ تخفیف اولین خرید</p>
-          <div class="hero__cta">
-            <a class="btn btn-primary" href={`${BASE}/shop`}>مشاهده فروشگاه</a>
-            <a class="btn btn-dark" href={`${BASE}/shop?sale=1`}>تخفیف‌های ویژه</a>
+      {slides.map((s: any, i: number) => (
+        <div class="hero__slide">
+          <img src={img(s.image)} alt={s.title} width="1280" height="720" fetchpriority={i === 0 ? 'high' : undefined} loading={i === 0 ? 'eager' : 'lazy'} />
+          <div class="hero__content">
+            <p class="hero__tag">{s.tag}</p>
+            <h2 class="hero__title">{s.title}</h2>
+            <p class="hero__sub">{s.sub}</p>
+            <div class="hero__cta">
+              <a class="btn btn-white" href={`${BASE}${s.link}`}>{s.cta}</a>
+              <a class="btn btn-ghost" style="border-color:rgba(255,255,255,.5);color:#fff" href={`${BASE}/shop`}>همه محصولات</a>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="hero__slide">
-        <img src={img('hero2')} alt="فروشگاه پارسی‌مزون" width="1600" height="900" loading="lazy" />
-        <div class="hero__content">
-          <p class="hero__tag">ارسال رایگان</p>
-          <h2 class="hero__title">سفارش بالای ۳ میلیون، ارسالش با ما</h2>
-          <p class="hero__sub">ارسال به سراسر کشور با پست پیشتاز و تیپاکس؛ ۷ روز مهلت بازگشت کالا</p>
-          <div class="hero__cta">
-            <a class="btn btn-primary" href={`${BASE}/shop`}>شروع خرید</a>
-          </div>
-        </div>
-      </div>
+      ))}
     </div>
+    <button class="hero__arrow hero__arrow--next" id="hero-next" aria-label="اسلاید بعدی">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>
+    </button>
+    <button class="hero__arrow hero__arrow--prev" id="hero-prev" aria-label="اسلاید قبلی">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
     <div class="hero__dots" id="hero-dots">
-      <button class="hero__dot is-active" aria-label="اسلاید ۱"></button>
-      <button class="hero__dot" aria-label="اسلاید ۲"></button>
+      {slides.map((s: any, i: number) => <button class={`hero__dot ${i === 0 ? 'is-active' : ''}`} aria-label={`اسلاید ${i + 1}`}></button>)}
     </div>
   </section>
 
-  <!-- دسته‌بندی‌ها -->
+  <!-- کالکشن‌های ویژه -->
   <section class="section">
     <div class="container">
       <div class="section-head">
-        <h2 class="section-title">خرید بر اساس دسته‌بندی</h2>
-        <a class="section-link" href={BASE + '/shop'}>همه محصولات ←</a>
+        <h2 class="section-title"><small>COLLECTIONS</small>کالکشن‌های پارسی‌مزون</h2>
+        <a class="section-link" href={`${BASE}/shop`}>مشاهده فروشگاه ←</a>
       </div>
-      <div class="cat-grid reveal">
-        {categories.map((c: any) => (
-          <a class="cat-card" href={`${BASE}/shop?cat=${c.slug}`}>
-            <img src={img(c.image)} alt={c.name} loading="lazy" width="400" height="400" />
-            <span class="cat-card__name">{c.name}</span>
-            <span class="cat-card__count">{fa(catCounts[c.id] || 0)} محصول</span>
+      <div class="col-grid">
+        {collections.map((c: any) => (
+          <a class="col-card reveal" href={`${BASE}/collection/${c.slug}`}>
+            <img src={img(c.image)} alt={`کالکشن ${c.name}`} loading="lazy" width="600" height="840" />
+            <div class="col-card__body">
+              <span class="col-card__name">{c.name}</span>
+              <span class="col-card__desc">{c.desc}</span>
+              <span class="col-card__cta">مشاهده کالکشن ←</span>
+            </div>
           </a>
         ))}
       </div>
     </div>
   </section>
 
-  <!-- محصولات جدید -->
-  <section class="section section--gray">
+  <!-- دسته‌بندی‌های تصویری -->
+  <section class="section section--ivory">
     <div class="container">
       <div class="section-head">
-        <h2 class="section-title">جدیدترین محصولات</h2>
-        <a class="section-link" href={BASE + '/shop?sort=new'}>مشاهده همه ←</a>
+        <h2 class="section-title"><small>CATEGORIES</small>خرید بر اساس دسته‌بندی</h2>
+        <a class="section-link" href={`${BASE}/shop`}>همه دسته‌ها ←</a>
       </div>
-      <div class="product-grid">
-        {news.map((p: any) => <ProductCard p={p} />)}
-      </div>
-      <div class="load-more">
-        <button class="btn btn-default" id="load-more">نمایش بیشتر</button>
+      <div class="cat-grid">
+        {topCats.map((c: any) => (
+          <a class="cat-card reveal" href={`${BASE}/category/${c.slug}`}>
+            <img src={img(c.image)} alt={c.name} loading="lazy" width="400" height="533" />
+            <span class="cat-card__body">
+              <span class="cat-card__name">{c.name}</span>
+              <span class="cat-card__count">{fa(catCounts[c.id] || 0)} محصول</span>
+            </span>
+          </a>
+        ))}
       </div>
     </div>
   </section>
 
-  <!-- پیشنهاد شگفت‌انگیز -->
+  <!-- جدیدترین محصولات -->
   <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title"><small>NEW ARRIVALS</small>تازه‌های این هفته</h2>
+        <a class="section-link" href={`${BASE}/shop?sort=new`}>مشاهده همه ←</a>
+      </div>
+      <div class="product-grid">
+        {news.map((p: any) => <ProductCard p={p} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- کمپین + شمارش معکوس -->
+  <section class="section" style="padding-top:0">
     <div class="container">
       <div class="promo-strip reveal">
         <div>
-          <h3 class="promo-strip__title">پیشنهاد شگفت‌انگیز پارسی‌مزون 🎁</h3>
-          <p class="promo-strip__sub">تا ٪۲۵ تخفیف روی مدل‌های منتخب — فرصت محدود!</p>
+          <h3 class="promo-strip__title">جشنواره فصلی پارسی‌مزون</h3>
+          <p class="promo-strip__sub">تا ٪۳۵ تخفیف روی مدل‌های منتخب زمستان — فرصت محدود</p>
         </div>
-        <div class="countdown" id="countdown" data-until="3d">
+        <div class="countdown" id="countdown" aria-label="زمان باقی‌مانده جشنواره">
           <div class="countdown__cell"><div class="countdown__num" data-cd="d">۰۲</div><div class="countdown__lbl">روز</div></div>
           <div class="countdown__cell"><div class="countdown__num" data-cd="h">۱۲</div><div class="countdown__lbl">ساعت</div></div>
           <div class="countdown__cell"><div class="countdown__num" data-cd="m">۳۰</div><div class="countdown__lbl">دقیقه</div></div>
@@ -97,67 +125,102 @@ products.forEach((p: any) => (catCounts[p.category] = (catCounts[p.category] || 
     </div>
   </section>
 
-  <!-- تخفیف‌دارها -->
-  <section class="section section--gray">
+  <!-- پرفروش‌ترین‌ها (اسکرول افقی) -->
+  <section class="section section--ivory">
     <div class="container">
       <div class="section-head">
-        <h2 class="section-title">تخفیف‌های ویژه</h2>
-        <a class="section-link" href={BASE + '/shop?sale=1'}>مشاهده همه ←</a>
+        <h2 class="section-title"><small>BEST SELLERS</small>محبوب‌ترین‌های مشتریان</h2>
+        <a class="section-link" href={`${BASE}/shop?sort=pop`}>مشاهده همه ←</a>
       </div>
-      <div class="product-grid">
-        {sale.slice(0, 4).map((p: any) => <ProductCard p={p} />)}
+      <div class="product-grid product-grid--scroll">
+        {best.map((p: any) => <ProductCard p={p} />)}
       </div>
     </div>
   </section>
 
-  <!-- مزایا -->
+  <!-- استایل پیشنهادی -->
   <section class="section">
     <div class="container">
-      <div class="features reveal">
-        <div class="feature">
-          <div class="feature__icon">🚚</div>
-          <div><p class="feature__t">ارسال سریع</p><p class="feature__s">پردازش همان روز، تحویل ۲ تا ۵ روزه</p></div>
+      <div class="section-head">
+        <h2 class="section-title"><small>STYLE THE LOOK</small>یک استایل، یک کلاس</h2>
+        <a class="section-link" href={`${BASE}/collection/minimal`}>کالکشن مینیمال ←</a>
+      </div>
+      <div class="look-grid">
+        <div class="look-main reveal">
+          <img src={img(lookProducts[0]?.images[0] || 'blazer01')} alt="استایل پیشنهادی مینیمال پارسی‌مزون" loading="lazy" width="720" height="960" />
+          <div class="look-hotspots">
+            {hotspots.map((h, i) => (
+              <span class="hotspot" style={`right:${h.x}%;top:${h.y}%`} title={lookProducts[i]?.name || ''}></span>
+            ))}
+          </div>
         </div>
-        <div class="feature">
-          <div class="feature__icon">🔄</div>
-          <div><p class="feature__t">۷ روز بازگشت</p><p class="feature__s">ضمانت بازگشت بدون قید و شرط</p></div>
-        </div>
-        <div class="feature">
-          <div class="feature__icon">🔐</div>
-          <div><p class="feature__t">پرداخت امن دمو</p><p class="feature__s">درگاه آزمایشی بدون برداشت واقعی</p></div>
-        </div>
-        <div class="feature">
-          <div class="feature__icon">💬</div>
-          <div><p class="feature__t">پشتیبانی واقعی</p><p class="feature__s">مشاوره سایز و استایل در روزهای کاری</p></div>
+        <div class="look-products">
+          {lookProducts.map((p: any) => <ProductCard p={p} hover={false} />)}
         </div>
       </div>
     </div>
   </section>
 
-  <!-- بلاگ -->
-  <section class="section section--gray">
+  <!-- پیشنهادهای ویژه -->
+  <section class="section section--ivory">
     <div class="container">
       <div class="section-head">
-        <h2 class="section-title">مجله پارسی‌مزون</h2>
-        <a class="section-link" href={BASE + '/blog'}>همه مقالات ←</a>
+        <h2 class="section-title"><small>SALE</small>پیشنهادهای ویژه</h2>
+        <a class="section-link" href={`${BASE}/shop?sale=1`}>همه تخفیف‌ها ←</a>
       </div>
-      <div class="blog-grid">
-        {posts.map((b: any) => (
-          <a class="blog-card reveal" href={`${BASE}/blog/${b.slug}`}>
-            <img src={img(b.image)} alt={b.title} loading="lazy" width="800" height="533" />
-            <div class="blog-card__body">
-              <p class="blog-card__meta">{b.category} • {b.date}</p>
-              <h3 class="blog-card__title">{b.title}</h3>
-            </div>
-          </a>
-        ))}
+      <div class="product-grid">
+        {sale.map((p: any) => <ProductCard p={p} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- ادیتوریال / مجله -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title"><small>FASHION STORIES</small>مجله پارسی‌مزون</h2>
+        <a class="section-link" href={`${BASE}/journal`}>همه مقالات ←</a>
+      </div>
+      <div class="editorial-grid">
+        <a class="editorial-main reveal" href={`${BASE}/journal/${featArticles[0].slug}`}>
+          <img src={img(featArticles[0].cover)} alt={featArticles[0].title} loading="lazy" width="900" height="600" />
+          <div class="editorial__body">
+            <span class="editorial__cat">{featArticles[0].category}</span>
+            <h3 class="editorial__title">{featArticles[0].title}</h3>
+          </div>
+        </a>
+        <div class="editorial-side">
+          {sideArticles.map((a: any) => (
+            <a class="reveal" href={`${BASE}/journal/${a.slug}`}>
+              <img src={img(a.cover)} alt={a.title} loading="lazy" width="600" height="400" />
+              <div class="editorial__body">
+                <span class="editorial__cat">{a.category}</span>
+                <h3 class="editorial__title" style="font-size:clamp(14px,1.4vw,18px)">{a.title}</h3>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- خبرنامه -->
+  <section class="section" style="padding-top:0">
+    <div class="container">
+      <div class="newsletter reveal">
+        <h2 class="newsletter__t">به جمع مشترکین پارسی‌مزون بپیوندید</h2>
+        <p class="newsletter__s">از کالکشن‌های جدید، کمپین‌ها و مقالات استایل، زودتر از همه باخبر شوید.</p>
+        <form class="newsletter__form" id="newsletter-form">
+          <input type="email" placeholder="آدرس ایمیل شما" aria-label="ایمیل" required />
+          <button type="submit">عضویت</button>
+        </form>
       </div>
     </div>
   </section>
 </Base>
 
 <script is:inline>
-  /* اسلایدر هیرو */
+  /* اسلایدر هیرو با فلش و اتوپلی */
   (function () {
     const slides = document.getElementById('hero-slides');
     const dots = [...document.querySelectorAll('.hero__dot')];
@@ -168,13 +231,16 @@ products.forEach((p: any) => (catCounts[p.category] = (catCounts[p.category] || 
       slides.style.transform = `translateX(${cur * 100}%)`;
       dots.forEach((d, n) => d.classList.toggle('is-active', n === cur));
     };
-    dots.forEach((d, n) => d.addEventListener('click', () => go(n)));
-    let timer = setInterval(() => go(cur + 1), 5000);
+    dots.forEach((d, n) => d.addEventListener('click', () => { go(n); restart(); }));
+    document.getElementById('hero-next')?.addEventListener('click', () => { go(cur - 1); restart(); });
+    document.getElementById('hero-prev')?.addEventListener('click', () => { go(cur + 1); restart(); });
+    let timer = setInterval(() => go(cur + 1), 6000);
+    function restart() { clearInterval(timer); timer = setInterval(() => go(cur + 1), 6000); }
     slides.addEventListener('mouseenter', () => clearInterval(timer));
-    slides.addEventListener('mouseleave', () => (timer = setInterval(() => go(cur + 1), 5000)));
+    slides.addEventListener('mouseleave', restart);
   })();
 
-  /* شمارش معکوس شگفت‌انگیز */
+  /* شمارش معکوس جشنواره */
   (function () {
     const box = document.getElementById('countdown');
     if (!box) return;
@@ -194,13 +260,10 @@ products.forEach((p: any) => (catCounts[p.category] = (catCounts[p.category] || 
     setInterval(tick, 1000);
   })();
 
-  /* نمایش بیشتر (رندر کارت‌های باقی‌مانده) */
-  (function () {
-    const btn = document.getElementById('load-more');
-    if (!btn) return;
-    btn.addEventListener('click', () => {
-      btn.textContent = 'همه محصولات نمایش داده شد';
-      btn.disabled = true;
-    });
-  })();
+  document.getElementById('newsletter-form')?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    this.querySelector('input').value = '';
+    this.querySelector('button').textContent = 'ثبت شد ✓';
+    setTimeout(() => { this.querySelector('button').textContent = 'عضویت'; }, 2400);
+  });
 </script>
