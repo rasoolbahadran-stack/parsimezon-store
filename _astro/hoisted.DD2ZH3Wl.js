@@ -1,4 +1,4 @@
-import{c as r,s as u}from"./hoisted.DZmY5xhh.js";const a=document.querySelector("link[rel=icon]").getAttribute("href").replace("/favicon.svg",""),p=e=>new Intl.NumberFormat("fa-IR").format(e),n=JSON.parse(sessionStorage.getItem("ps_pending_order")||"null");function d(e,o,s,t,c=!0){if(!c){document.getElementById("gateway").innerHTML=`
+import{c as r,s as u}from"./hoisted.DjILnzHD.js";const a=document.querySelector("link[rel=icon]").getAttribute("href").replace("/favicon.svg",""),p=e=>new Intl.NumberFormat("fa-IR").format(e),n=JSON.parse(sessionStorage.getItem("ps_pending_order")||"null");function d(e,o,s,t,c=!0){if(!c){document.getElementById("gateway").innerHTML=`
         <div class="gateway__head"><b>نتیجه پرداخت</b></div>
         <div class="gateway__body">
           <div class="pay-result">

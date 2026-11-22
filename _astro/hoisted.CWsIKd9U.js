@@ -1,4 +1,4 @@
-import"./hoisted.DZmY5xhh.js";const p=document.querySelector("link[rel=icon]").getAttribute("href").replace("/favicon.svg",""),e=a=>new Intl.NumberFormat("fa-IR").format(a),l=new URLSearchParams(location.search).get("code"),d=JSON.parse(localStorage.getItem("ps_orders")||"[]"),s=d.find(a=>a.code===l);if(!s)document.getElementById("receipt-box").innerHTML=`
+import"./hoisted.DjILnzHD.js";const p=document.querySelector("link[rel=icon]").getAttribute("href").replace("/favicon.svg",""),e=a=>new Intl.NumberFormat("fa-IR").format(a),l=new URLSearchParams(location.search).get("code"),d=JSON.parse(localStorage.getItem("ps_orders")||"[]"),s=d.find(a=>a.code===l);if(!s)document.getElementById("receipt-box").innerHTML=`
       <div class="cart-empty" style="padding-top:80px">
         <div class="cart-empty__icon">🔎</div>
         <p>سفارشی با این کد پیدا نشد.</p>
