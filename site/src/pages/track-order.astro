@@ -1,0 +1,97 @@
+---
+import Base from '../layouts/Base.astro';
+import { BASE, fa, dateFa, statusFa } from '../lib/site';
+---
+
+<Base title="پیگیری سفارش | پارسی‌مزون" desc="وضعیت سفارش خود را با کد سفارش پیگیری کنید — نمایش روند پردازش، ارسال و تحویل در نسخه دموی پارسی‌مزون" noindex={false}>
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">پیگیری سفارش</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / پیگیری سفارش</p>
+    </div>
+  </section>
+
+  <div class="container track-wrap">
+    <div class="track-demo">
+      💡 این نسخه دمو است. اگر در همین مرورگر سفارشی ثبت کرده‌اید، کد آن (مانند <b dir="ltr">PS-48213</b>) را وارد کنید. برای نمایش، روی «سفارش نمونه» بزنید.
+      <button type="button" id="track-demo-fill">سفارش نمونه</button>
+    </div>
+    <form class="track-form" id="track-form">
+      <input id="track-code" placeholder="PS-48213" aria-label="کد سفارش" required />
+      <button class="btn btn-primary" type="submit">پیگیری</button>
+    </form>
+
+    <div id="track-result"></div>
+  </div>
+</Base>
+
+<script>
+  import { BASE, dateFa, statusFa } from '../lib/site';
+  import { load } from '../lib/store';
+  const fa = (n: number) => new Intl.NumberFormat('fa-IR').format(n);
+  const STAGES = ['pending', 'processing', 'shipped', 'delivered'];
+  const STAGE_FA: Record<string, string> = { pending: 'ثبت شد', processing: 'در حال پردازش', shipped: 'ارسال شد', delivered: 'تحویل شد' };
+
+  function render(order: any) {
+    const box = document.getElementById('track-result')!;
+    if (!order) {
+      box.innerHTML = `
+        <div class="pay-result">
+          <div class="pay-result__icon pay-result__icon--no">✕</div>
+          <p class="pay-result__t">سفارشی با این کد پیدا نشد</p>
+          <p class="pay-result__s">کد سفارش در رسید خرید و صفحه «حساب کاربری» موجود است. اگر سفارش را در این مرورگر ثبت نکرده‌اید، داده دموی بالا را امتحان کنید.</p>
+        </div>`;
+      return;
+    }
+    const items = (order.items || []).map((it: any) => {
+      const products = load<any[]>('ps_products', []);
+      const p = products.find((x) => x.id === it.productId);
+      return `<div class="cart-line" style="grid-template-columns:64px 1fr auto">
+        ${p ? `<img src="${document.documentElement.dataset.base}/assets/img/${p.images[0]}.webp" alt="${p.name}">` : ''}
+        <div><div class="cart-line__t">${p?.name || it.productId}</div><div class="cart-line__v">تعداد: ${fa(it.qty)}</div></div>
+        <div class="cart-line__price">${fa(it.lineSum ?? (it.price || 0) * it.qty)} تومان</div>
+      </div>`;
+    }).join('');
+    const idx = Math.max(0, STAGES.indexOf(order.status === 'cancelled' ? 'pending' : order.status));
+    box.innerHTML = `
+      <div class="receipt" style="margin-top:0">
+        <div class="receipt__head">
+          <p style="font-size:12.5px;color:var(--c-text-soft)">وضعیت سفارش</p>
+          <p class="receipt__code">${order.code}</p>
+          <span class="status-pill ${order.status === 'delivered' ? 'status-pill--paid' : order.status === 'cancelled' ? 'status-pill--cancelled' : 'status-pill--processing'}">${statusFa[order.status] || STAGE_FA[order.status] || order.status}</span>
+          <p style="font-size:12px;color:var(--c-text-soft);margin-top:8px">ثبت شده در ${dateFa(order.createdAt)}</p>
+        </div>
+        <div class="receipt__body">
+          <div class="timeline">
+            ${STAGES.map((s, i) => `<div class="timeline__item ${i <= idx ? 'is-done' : ''}">${STAGE_FA[s]}${i === idx && order.status !== 'cancelled' ? ' — مرحله فعلی' : ''}</div>`).join('')}
+          </div>
+          <h3 style="font-size:15px;font-weight:800;margin:18px 0 8px">اقلام سفارش</h3>
+          ${items || '<p style="color:var(--c-text-soft);font-size:13px">—</p>'}
+          <div class="sum-row is-total" style="margin-top:14px"><span>مبلغ کل</span><span>${fa(order.total)} تومان</span></div>
+          <p style="font-size:12px;color:var(--c-text-soft);margin-top:10px">روش ارسال: ${order.shippingMethod || '—'} | پرداخت: ${order.paymentMethod === 'cod' ? 'در محل' : 'آنلاین (دمو)'}</p>
+        </div>
+      </div>`;
+  }
+
+  document.getElementById('track-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const code = (document.getElementById('track-code') as HTMLInputElement).value.trim().toUpperCase();
+    const orders = load<any[]>('ps_orders', []);
+    render(orders.find((o) => String(o.code).toUpperCase() === code) || null);
+  });
+  document.getElementById('track-demo-fill')?.addEventListener('click', () => {
+    const orders = load<any[]>('ps_orders', []);
+    const sample = orders.find((o) => String(o.code).startsWith('PS-')) || orders[0];
+    if (sample) {
+      (document.getElementById('track-code') as HTMLInputElement).value = String(sample.code);
+      render(sample);
+    } else {
+      /* اگر سفارشی در localStorage نیست، یک سفارش دموی ثابت نمایش بده */
+      render({
+        code: 'PS-48213', status: 'shipped', createdAt: new Date().toISOString(),
+        total: 2450000, shippingMethod: 'پست پیشتاز', paymentMethod: 'online',
+        items: [],
+      });
+    }
+  });
+</script>

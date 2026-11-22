@@ -1,89 +1,26 @@
 ---
 import Base from '../layouts/Base.astro';
-import { BASE, categories } from '../lib/site';
+import ShopBrowser from '../components/ShopBrowser.astro';
+import { BASE, categories, fa, products } from '../lib/site';
+const count = fa(products.filter((p: any) => p.status === 'published').length);
 ---
 
-<Base title="فروشگاه" desc="خرید آنلاین پوشاک زنانه پارسی‌مزون؛ پالتو، مانتو، شومیز، بافت، لباس مجلسی و اکسسوری با فیلتر رنگ، سایز و قیمت">
+<Base title="فروشگاه پارسی‌مزون | خرید آنلاین پوشاک زنانه" desc="خرید آنلاین پوشاک زنانه پارسی‌مزون؛ پالتو، مانتو، شومیز، بافت، لباس مجلسی و اکسسوری با فیلتر رنگ، سایز و قیمت — ۹۲ محصول منتخب با ارسال سریع">
   <section class="page-head">
     <div class="container">
       <h1 class="page-head__t">فروشگاه پارسی‌مزون</h1>
       <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / فروشگاه</p>
+      <div class="shop-head-meta" style="margin-top:10px">
+        <span><b>{count}</b> محصول منتخب</span>
+        <span>ارسال رایگان بالای ۳ میلیون تومان</span>
+        <span>۷ روز ضمانت بازگشت</span>
+      </div>
     </div>
   </section>
 
-  <div class="container" style="padding-top:18px">
-    <div class="cat-chips" id="cat-chips">
-      <button class="cat-chip is-active" data-slug="all">همه</button>
+  <div style="padding-top:6px">
+    <ShopBrowser showCats={true}>
       {categories.map((c: any) => <button class="cat-chip" data-slug={c.slug}>{c.name}</button>)}
-    </div>
-  </div>
-
-  <div class="container shop-layout">
-    <aside class="shop-side" id="shop-side">
-      <div class="filter-box" style="display:flex;justify-content:space-between;align-items:center">
-        <p class="filter-box__t" style="margin:0">فیلترها</p>
-        <button id="filter-clear" type="button">حذف فیلترها</button>
-        <button id="filter-close" type="button" style="font-size:16px" aria-label="بستن فیلتر">✕</button>
-      </div>
-      <div class="filter-box">
-        <p class="filter-box__t">رنگ</p>
-        <div class="filter-colors" id="filter-colors"></div>
-      </div>
-      <div class="filter-box">
-        <p class="filter-box__t">سایز</p>
-        <div id="filter-sizes"></div>
-      </div>
-      <div class="filter-box">
-        <p class="filter-box__t">محدوده قیمت (تومان)</p>
-        <div class="price-inputs">
-          <input id="f-min" inputmode="numeric" placeholder="از" />
-          <input id="f-max" inputmode="numeric" placeholder="تا" />
-        </div>
-        <button class="btn btn-primary btn-sm btn-block" style="margin-top:10px" id="f-apply" type="button">اعمال فیلتر</button>
-      </div>
-      <div class="filter-box">
-        <label><input type="checkbox" class="f-sale" />فقط محصولات تخفیف‌دار</label>
-        <label><input type="checkbox" class="f-stock" />فقط کالاهای موجود</label>
-      </div>
-    </aside>
-
-    <div>
-      <div class="shop-toolbar">
-        <span class="shop-toolbar__found" id="found-count"></span>
-        <div style="display:flex;gap:10px;align-items:center">
-          <button class="filter-toggle" id="filter-toggle" type="button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-            فیلترها
-          </button>
-          <select id="f-sort" aria-label="مرتب‌سازی">
-            <option value="new">جدیدترین</option>
-            <option value="cheap">ارزان‌ترین</option>
-            <option value="exp">گران‌ترین</option>
-            <option value="pop">محبوب‌ترین</option>
-            <option value="sale">بیشترین تخفیف</option>
-          </select>
-        </div>
-      </div>
-      <div class="product-grid" id="shop-grid"></div>
-      <div class="cart-empty" id="shop-empty" style="display:none">
-        <div class="cart-empty__icon">🔍</div>
-        <p>محصولی با این فیلترها پیدا نشد.</p>
-        <button class="btn btn-dark btn-sm" id="filter-clear-2" type="button">حذف فیلترها</button>
-      </div>
-      <div class="load-more"><button class="btn btn-ghost" id="load-more" type="button">نمایش محصولات بیشتر</button></div>
-    </div>
+    </ShopBrowser>
   </div>
 </Base>
-
-<script>
-  import { initShop } from '../scripts/shop';
-  import { BASE } from '../lib/site';
-  const boot = () => initShop({ container: 'shop-grid' });
-  if (localStorage.getItem('ps_products') === null) {
-    fetch(`${BASE}/data/db.json`).then((r) => r.json()).then((s: any) => {
-      Object.entries({ products: 'ps_products', categories: 'ps_categories' }).forEach(([k, ls]) => localStorage.setItem(ls as string, JSON.stringify(s[k])));
-      boot();
-    });
-  } else boot();
-  document.getElementById('filter-clear-2')?.addEventListener('click', () => (document.getElementById('filter-clear') as HTMLElement)?.click());
-</script>

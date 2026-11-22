@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import ShopBrowser from '../components/ShopBrowser.astro';
+import { BASE } from '../lib/site';
+---
+
+<Base title="جدیدترین محصولات | پارسی‌مزون" desc="تازه‌ترین اضافه‌شده‌ها به کالکشن پارسی‌مزون؛ جدیدترین پالتو، مانتو، شومیز و اکسسوری زنانه با بهترین کیفیت">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">جدیدترین محصولات</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / <a href={BASE + '/shop'}>فروشگاه</a> / جدیدترین‌ها</p>
+      <div class="shop-head-meta" style="margin-top:10px">
+        <span>آخرین مدل‌هایی که به بوتیک اضافه شده‌اند</span>
+      </div>
+    </div>
+  </section>
+  <div style="padding-top:6px">
+    <ShopBrowser presetSort="new" />
+  </div>
+</Base>

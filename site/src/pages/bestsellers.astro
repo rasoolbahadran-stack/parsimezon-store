@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import ShopBrowser from '../components/ShopBrowser.astro';
+import { BASE } from '../lib/site';
+---
+
+<Base title="پرفروش‌ترین محصولات | پارسی‌مزون" desc="محبوب‌ترین انتخاب‌های مشتریان پارسی‌مزون؛ مدلی که بیشترین فروش و بهترین امتیاز را گرفته‌اند">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">پرفروش‌ترین‌ها</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / <a href={BASE + '/shop'}>فروشگاه</a> / پرفروش‌ها</p>
+      <div class="shop-head-meta" style="margin-top:10px">
+        <span>انتخاب اکثریت مشتریان پارسی‌مزون — بر اساس فروش و امتیاز</span>
+      </div>
+    </div>
+  </section>
+  <div style="padding-top:6px">
+    <ShopBrowser presetSort="pop" />
+  </div>
+</Base>

@@ -172,6 +172,11 @@ export function toggleWishlist(id: string): boolean {
   }
   save(LS.wishlist, w);
   renderWishlistBadge();
+  const cur = w.includes(id);
+  document.querySelectorAll(`[data-wish-btn="${id}"]`).forEach((el) => {
+    el.classList.toggle('is-active', cur);
+    el.setAttribute('aria-pressed', cur ? 'true' : 'false');
+  });
   return i === -1;
 }
 export function renderWishlistBadge() {
@@ -459,6 +464,13 @@ export function bootShared(root: string) {
       if (p && p.sizes && p.sizes.length > 1 && p.variants && p.variants.length) {
         quickView(id);
       } else {
+        /* حالت بارگذاری → موفقیت برای بازخورد لمسی */
+        add.classList.add('is-busy');
+        setTimeout(() => {
+          add.classList.remove('is-busy');
+          add.classList.add('is-done');
+          setTimeout(() => add.classList.remove('is-done'), 1300);
+        }, 260);
         addToCart(id, undefined, 1, p?.name);
       }
       return;
@@ -484,6 +496,26 @@ export function bootShared(root: string) {
 
   /* جستجوی زنده هدر */
   initSearch(root);
+
+  /* Fallback تصاویر: اگر تصویر محصول لود نشد، تصویر پیش‌فرض همان خانواده جایگزین می‌شود */
+  document.addEventListener(
+    'error',
+    (e) => {
+      const el = e.target as HTMLElement;
+      if (!(el instanceof HTMLImageElement) || el.dataset.fbDone === '1') return;
+      const fb = el.dataset.fb;
+      if (fb) {
+        el.dataset.fbDone = '1';
+        el.src = `${root}/assets/img/${fb}.webp`;
+        el.classList.add('is-fading');
+      } else if (el.closest('.product-card__media')) {
+        el.dataset.fbDone = '1';
+        el.src = `${root}/assets/img/coat01.webp`;
+        el.classList.add('is-fading');
+      }
+    },
+    true
+  );
 }
 
 /* ---------- جستجوی زنده با نرمال‌سازی فارسی ---------- */

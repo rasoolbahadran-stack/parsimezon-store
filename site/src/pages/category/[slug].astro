@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import ShopBrowser from '../../components/ShopBrowser.astro';
 import { BASE, img, categories, products, articles, fa } from '../../lib/site';
 
 export function getStaticPaths() {
@@ -11,75 +12,25 @@ const journalHit = articles.find((a: any) => a.title.includes(cat.name.replace('
 const bannerImg = cat.banner || cat.image;
 ---
 
-<Base title={cat.name} desc={cat.desc}>
+<Base title={`${cat.name} | فروشگاه پارسی‌مزون`} desc={cat.desc}>
   <section class="cat-banner">
     <img src={img(bannerImg)} alt={`دسته‌بندی ${cat.name}`} width="1280" height="720" fetchpriority="high" />
     <div class="cat-banner__body">
+      <p class="editorial__cat" style="color:var(--c-accent)">دسته‌بندی</p>
       <h1 class="cat-banner__t">{cat.name}</h1>
       <p class="cat-banner__d">{cat.desc}</p>
+      <div class="shop-head-meta" style="margin-top:10px;color:rgba(255,255,255,.8)">
+        <span><b style="color:#fff">{count}</b> محصول در این دسته</span>
+      </div>
     </div>
   </section>
 
-  <div class="container shop-layout">
-    <aside class="shop-side" id="shop-side">
-      <div class="filter-box" style="display:flex;justify-content:space-between;align-items:center">
-        <p class="filter-box__t" style="margin:0">فیلترها</p>
-        <button id="filter-clear" type="button">حذف فیلترها</button>
-        <button id="filter-close" type="button" style="font-size:16px" aria-label="بستن فیلتر">✕</button>
-      </div>
-      <div class="filter-box">
-        <p class="filter-box__t">رنگ</p>
-        <div class="filter-colors" id="filter-colors"></div>
-      </div>
-      <div class="filter-box">
-        <p class="filter-box__t">سایز</p>
-        <div id="filter-sizes"></div>
-      </div>
-      <div class="filter-box">
-        <p class="filter-box__t">محدوده قیمت (تومان)</p>
-        <div class="price-inputs">
-          <input id="f-min" inputmode="numeric" placeholder="از" />
-          <input id="f-max" inputmode="numeric" placeholder="تا" />
-        </div>
-        <button class="btn btn-primary btn-sm btn-block" style="margin-top:10px" id="f-apply" type="button">اعمال فیلتر</button>
-      </div>
-      <div class="filter-box">
-        <label><input type="checkbox" class="f-sale" />فقط محصولات تخفیف‌دار</label>
-        <label><input type="checkbox" class="f-stock" />فقط کالاهای موجود</label>
-      </div>
-    </aside>
-
-    <div>
-      <div class="shop-toolbar">
-        <span class="shop-toolbar__found" id="found-count"></span>
-        <div style="display:flex;gap:10px;align-items:center">
-          <button class="filter-toggle" id="filter-toggle" type="button">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
-            فیلترها
-          </button>
-          <select id="f-sort" aria-label="مرتب‌سازی">
-            <option value="new">جدیدترین</option>
-            <option value="cheap">ارزان‌ترین</option>
-            <option value="exp">گران‌ترین</option>
-            <option value="pop">محبوب‌ترین</option>
-            <option value="sale">بیشترین تخفیف</option>
-          </select>
-        </div>
-      </div>
-      <div class="product-grid" id="shop-grid"></div>
-      <div class="cart-empty" id="shop-empty" style="display:none">
-        <div class="cart-empty__icon">🔍</div>
-        <p>محصولی با این فیلترها در این دسته پیدا نشد.</p>
-        <button class="btn btn-dark btn-sm" id="filter-clear-2" type="button">حذف فیلترها</button>
-      </div>
-      <div class="load-more"><button class="btn btn-ghost" id="load-more" type="button">نمایش محصولات بیشتر</button></div>
-    </div>
-  </div>
+  <ShopBrowser showCats={false} />
 
   {journalHit && (
     <section class="section section--ivory">
       <div class="container">
-        <a href={`${BASE}/journal/${journalHit.slug}`} style="display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:24px;align-items:center">
+        <a href={`${BASE}/journal/${journalHit.slug}`} style="display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:24px;align-items:center" class="reveal">
           <img src={img(journalHit.cover)} alt={journalHit.title} loading="lazy" width="320" height="213" style="aspect-ratio:3/2;object-fit:cover" />
           <div>
             <p class="editorial__cat" style="color:var(--c-primary)">{journalHit.category} — مجله پارسی‌مزون</p>
@@ -92,18 +43,3 @@ const bannerImg = cat.banner || cat.image;
     </section>
   )}
 </Base>
-
-<script>
-  import { initShop } from '../../scripts/shop';
-  import { BASE } from '../../lib/site';
-  const slug = document.location.pathname.includes('/category/') ? document.location.pathname.split('/category/')[1].replace(/\/$/, '') : '';
-  const boot = () => initShop({ container: 'shop-grid', fixedCat: slug, lockedCat: true });
-  if (localStorage.getItem('ps_products') === null) {
-    fetch(`${BASE}/data/db.json`).then((r) => r.json()).then((s: any) => {
-      localStorage.setItem('ps_products', JSON.stringify(s.products));
-      localStorage.setItem('ps_categories', JSON.stringify(s.categories));
-      boot();
-    });
-  } else boot();
-  document.getElementById('filter-clear-2')?.addEventListener('click', () => (document.getElementById('filter-clear') as HTMLElement)?.click());
-</script>

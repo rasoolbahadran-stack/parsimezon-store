@@ -24,6 +24,11 @@ articles.forEach((a: any) => (covers[a.category] = (covers[a.category] || 0) + 1
         <div class="article-hero__body">
           <span class="article-hero__cat">{featured.category} • مقاله ویژه هفته</span>
           <h2 class="article-hero__title">{featured.title}</h2>
+          <p>{featured.excerpt}</p>
+          <p style="margin-top:10px;display:flex;align-items:center;gap:14px;font-size:12px;color:rgba(255,255,255,.75)">
+            <span>{fa(featured.readTime)} دقیقه مطالعه</span>
+            <span class="btn btn-white btn-sm">مطالعه مقاله ←</span>
+          </p>
         </div>
       </a>
     </div>
@@ -31,7 +36,7 @@ articles.forEach((a: any) => (covers[a.category] = (covers[a.category] || 0) + 1
 
   <!-- فیلتر دسته‌بندی -->
   <div class="container">
-    <div class="cat-chips" id="journal-chips">
+    <div class="journal-chips" id="journal-chips">
       <button class="cat-chip is-active" data-cat="all">همه ({fa(articles.length)})</button>
       {journalCats.map((c: string) => <button class="cat-chip" data-cat={c}>{c} ({fa(covers[c] || 0)})</button>)}
     </div>

@@ -37,14 +37,20 @@ const featImg = articles[0]?.cover || 'banner101';
               <div class="mega__list">
                 {navCats.slice(7).map((c: any) => <a href={`${BASE}/category/${c.slug}`}>{c.name}</a>)}
                 {moreCats.map((c: any) => <a href={`${BASE}/category/${c.slug}`}>{c.name}</a>)}
-                <a href={`${BASE}/shop?sale=1`}><b style="color:var(--c-primary)">تخفیف‌های ویژه</b></a>
               </div>
             </div>
-            <div class="mega__col">
-              <a class="mega__feature" href={`${BASE}/shop`}>
-                <img src={`${BASE}/assets/img/${featImg}.webp`} alt="کالکشن منتخب پارسی‌مزون" loading="lazy" width="240" height="300" />
-                <span>کالکشن زمستان پایتخت</span>
-                <em>مشاهده کالکشن ←</em>
+            <div class="mega__col" style="border-left:1px solid var(--c-border)">
+              <p class="mega__title">منتخب فروشگاه</p>
+              <div class="mega__list" style="grid-template-columns:1fr">
+                <a href={`${BASE}/new-arrivals`}>جدیدترین محصولات</a>
+                <a href={`${BASE}/bestsellers`}>پرفروش‌ترین‌ها</a>
+                <a href={`${BASE}/sale`}><b style="color:var(--c-primary)">تخفیف‌های ویژه</b></a>
+                <a href={`${BASE}/lookbook`}>لوک‌بوک استایل‌ها</a>
+              </div>
+              <a class="mega__feature" href={`${BASE}/sale`} style="display:block;margin-top:18px">
+                <img src={`${BASE}/assets/img/banner206.webp`} alt="جشنواره فصلی پارسی‌مزون" loading="lazy" width="240" height="300" />
+                <span>جشنواره فصلی — تا ٪۳۵</span>
+                <em>مشاهده تخفیف‌ها ←</em>
               </a>
             </div>
           </div>
@@ -66,6 +72,7 @@ const featImg = articles[0]?.cover || 'banner101';
           </div>
         </li>
         <li><a href={BASE + '/shop?sale=1'}>تخفیف‌ها</a></li>
+        <li><a href={BASE + '/lookbook'}>لوک‌بوک</a></li>
         <li><a href={BASE + '/about'}>درباره ما</a></li>
         <li><a href={BASE + '/contact'}>تماس</a></li>
       </ul>

@@ -1,0 +1,105 @@
+---
+import { BASE } from '../lib/site';
+/* چیدمان مشترک فروشگاه: سایدبار فیلتر + تولبار + گرید محصولات
+   showCats: نمایش فیلتر دسته و نوار چیپ‌ها (فقط صفحه فروشگاه)
+   presetSale/presetSort: تنظیم اولیه برای صفحات تخفیف‌ها/جدیدترین/پرفروش‌ها */
+const { showCats = false, presetSale = false, presetSort = '', resultPhrase = '' } = Astro.props as any;
+---
+
+<div class="container shop-layout">
+  <aside class="shop-side" id="shop-side">
+    <div class="filter-box" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <p class="filter-box__t" style="margin:0">فیلترها</p>
+      <div style="display:flex;gap:12px;align-items:center">
+        <button id="filter-clear" type="button">حذف همه</button>
+        <button id="filter-close" type="button" style="font-size:16px" aria-label="بستن فیلتر">✕</button>
+      </div>
+    </div>
+    {showCats ? (
+      <div class="filter-box">
+        <p class="filter-box__t">دسته‌بندی</p>
+        <div id="filter-cats" style="display:flex;flex-direction:column;gap:2px"></div>
+      </div>
+    ) : null}
+    <div class="filter-box">
+      <p class="filter-box__t">رنگ</p>
+      <div class="filter-colors" id="filter-colors"></div>
+    </div>
+    <div class="filter-box">
+      <p class="filter-box__t">سایز</p>
+      <div id="filter-sizes"></div>
+    </div>
+    <div class="filter-box">
+      <p class="filter-box__t">محدوده قیمت (تومان)</p>
+      <div class="price-inputs">
+        <input id="f-min" inputmode="numeric" placeholder="از" aria-label="حداقل قیمت" />
+        <input id="f-max" inputmode="numeric" placeholder="تا" aria-label="حداکثر قیمت" />
+      </div>
+      <div class="price-presets" id="price-presets">
+        <button type="button" data-min="0" data-max="1500000">تا ۱٫۵ میلیون</button>
+        <button type="button" data-min="1500000" data-max="3000000">۱٫۵ تا ۳ میلیون</button>
+        <button type="button" data-min="3000000" data-max="">بالای ۳ میلیون</button>
+      </div>
+      <button class="btn btn-primary btn-sm btn-block" style="margin-top:10px" id="f-apply" type="button">اعمال فیلتر</button>
+    </div>
+    <div class="filter-box" style="display:flex;flex-direction:column;gap:4px">
+      <label><input type="checkbox" class="f-sale" />فقط محصولات تخفیف‌دار</label>
+      <label><input type="checkbox" class="f-stock" />فقط کالاهای موجود</label>
+    </div>
+    <button class="btn btn-accent btn-block btn-sm" id="filter-apply-m" type="button" style="margin-top:4px">مشاهده نتایج</button>
+  </aside>
+
+  <div>
+    <div class="shop-toolbar shop-toolbar--sticky">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="filter-toggle" id="filter-toggle" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          فیلترها
+          <span class="ft-badge" id="ft-badge" style="display:none">۰</span>
+        </button>
+        <span class="shop-toolbar__found" id="found-count"></span>
+      </div>
+      <select id="f-sort" aria-label="مرتب‌سازی">
+        {!presetSale ? '' : null}
+        <option value="new">جدیدترین</option>
+        <option value="pop">محبوب‌ترین</option>
+        <option value="cheap">ارزان‌ترین</option>
+        <option value="exp">گران‌ترین</option>
+        <option value="sale">بیشترین تخفیف</option>
+      </select>
+    </div>
+    <div class="active-chips" id="active-chips"></div>
+    {showCats ? (
+      <div class="cat-strip" id="cat-chips" role="tablist" aria-label="دسته‌بندی‌ها">
+        <button class="cat-chip is-active" data-slug="all">همه محصولات</button>
+        <slot />
+      </div>
+    ) : null}
+    <div class="product-grid" id="shop-grid"></div>
+    <div class="cart-empty" id="shop-empty" style="display:none">
+      <div class="cart-empty__icon">🔍</div>
+      <p>{resultPhrase || 'محصولی با این فیلترها پیدا نشد.'}</p>
+      <button class="btn btn-ghost btn-sm" id="filter-clear-2" type="button">حذف فیلترها</button>
+    </div>
+    <div class="load-more"><button class="btn btn-ghost" id="load-more" type="button">نمایش محصولات بیشتر</button></div>
+  </div>
+</div>
+
+<script>
+  import { initShop } from '../scripts/shop';
+  import { BASE } from '../lib/site';
+  const el = document.currentScript as any;
+  const opts = {
+    container: 'shop-grid',
+    showCats: el?.dataset?.showCats === '1',
+    presetSale: el?.dataset?.presetSale === '1',
+    presetSort: el?.dataset?.presetSort || '',
+  };
+  const boot = () => initShop(opts);
+  if (localStorage.getItem('ps_products') === null) {
+    fetch(`${BASE}/data/db.json`).then((r) => r.json()).then((s: any) => {
+      Object.entries({ products: 'ps_products', categories: 'ps_categories' }).forEach(([k, ls]) => localStorage.setItem(ls as string, JSON.stringify(s[k])));
+      boot();
+    });
+  } else boot();
+</script>

@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { BASE, img, collections, products } from '../lib/site';
+
+/* استایل‌های منتخب: از کالکشن‌ها + محصول شاخص هر استایل */
+const looks = collections.map((c: any, i: number) => {
+  const items = (c.products || []).map((s: string) => products.find((p: any) => p.slug === s)).filter(Boolean).slice(0, 4);
+  return {
+    num: i + 1,
+    cat: c.name,
+    title: c.desc,
+    slug: c.slug,
+    img: c.image,
+    items,
+  };
+});
+---
+
+<Base title="لوک‌بوک پارسی‌مزون | استایل‌های منتخب فصل" desc="استایل‌های کامل و منتخب پارسی‌مزون برای زمستان؛ ترکیب‌های آماده از کالکشن‌های مینیمال، زمستان پایتخت، مهمانی و روزمره">
+  <section class="page-head">
+    <div class="container">
+      <h1 class="page-head__t">لوک‌بوک زمستان</h1>
+      <p class="breadcrumb"><a href={BASE + '/'}>خانه</a> / لوک‌بوک</p>
+      <p style="margin-top:12px; max-width:640px; color:var(--c-text-soft); font-size:14px; line-height:2.2">
+        چهار استایل کامل برای فصل سرد؛ هر استایل از کالکشن‌های منتخب پارسی‌مزون ساخته شده و همه تکه‌های آن یکجا قابل خرید است. روی هر محصول کلیک کنید تا صفحه کامل آن را ببینید.
+      </p>
+    </div>
+  </section>
+
+  <div class="container" style="padding-bottom:20px">
+    {looks.map((l: any) => (
+      <div class="lookbook-item">
+        <div class="lookbook-item__media reveal">
+          <span class="lookbook-item__num">LOOK {l.num}</span>
+          <img src={img(l.img)} alt={`استایل ${l.cat} پارسی‌مزون`} loading="lazy" width="640" height="800" />
+        </div>
+        <div class="lookbook-item__info reveal">
+          <p class="editorial__cat">کالکشن {l.cat}</p>
+          <h2>{l.title}</h2>
+          <p>تکه‌های این استایل — همه با هم یک ست کامل می‌سازند.</p>
+          <div class="lookbook-item__products">
+            {l.items.map((p: any) => <ProductCard p={p} hover={false} />)}
+          </div>
+          <a class="btn btn-ghost btn-sm" style="margin-top:16px" href={`${BASE}/collection/${l.slug}`}>مشاهده کالکشن کامل ←</a>
+        </div>
+      </div>
+    ))}
+  </div>
+</Base>

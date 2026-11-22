@@ -4,9 +4,11 @@ import ProductCard from '../components/ProductCard.astro';
 import { BASE, img, products, categories, collections, articles, slides, fa } from '../lib/site';
 
 const pub = products.filter((p: any) => p.status === 'published');
-const news = [...pub].sort((a: any, b: any) => b.createdAt.localeCompare(a.createdAt)).slice(0, 8);
-const best = pub.filter((p: any) => p.bestseller).slice(0, 8);
-const sale = pub.filter((p: any) => p.oldPrice).slice(0, 8);
+const news = [...pub].sort((a: any, b: any) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10);
+const newsIds = new Set(news.map((p: any) => p.id));
+const best = pub.filter((p: any) => p.bestseller && !newsIds.has(p.id)).slice(0, 10);
+const bestIds = new Set(best.map((p: any) => p.id));
+const sale = pub.filter((p: any) => p.oldPrice && !newsIds.has(p.id) && !bestIds.has(p.id)).sort((a: any, b: any) => (1 - a.price / a.oldPrice) - (1 - b.price / b.oldPrice)).slice(0, 10);
 const topCats = categories.slice(0, 10);
 const catCounts: Record<string, number> = {};
 pub.forEach((p: any) => (catCounts[p.category] = (catCounts[p.category] || 0) + 1));
@@ -99,7 +101,7 @@ const sideArticles = articles.slice(3, 5);
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><small>NEW ARRIVALS</small>تازه‌های این هفته</h2>
-        <a class="section-link" href={`${BASE}/shop?sort=new`}>مشاهده همه ←</a>
+        <a class="section-link" href={`${BASE}/new-arrivals`}>مشاهده همه ←</a>
       </div>
       <div class="product-grid">
         {news.map((p: any) => <ProductCard p={p} />)}
@@ -107,19 +109,28 @@ const sideArticles = articles.slice(3, 5);
     </div>
   </section>
 
-  <!-- کمپین + شمارش معکوس -->
+  <!-- بنر جشنواره فصلی — ادیتوریال -->
   <section class="section" style="padding-top:0">
     <div class="container">
-      <div class="promo-strip reveal">
-        <div>
-          <h3 class="promo-strip__title">جشنواره فصلی پارسی‌مزون</h3>
-          <p class="promo-strip__sub">تا ٪۳۵ تخفیف روی مدل‌های منتخب زمستان — فرصت محدود</p>
+      <div class="festival reveal">
+        <div class="festival__media">
+          <img src={img('coat02')} alt="پالتو کالکشن زمستان پارسی‌مزون" loading="lazy" width="760" height="950" />
+          <span class="festival__badge">تا <b>٪۳۵</b> تخفیف</span>
         </div>
-        <div class="countdown" id="countdown" aria-label="زمان باقی‌مانده جشنواره">
-          <div class="countdown__cell"><div class="countdown__num" data-cd="d">۰۲</div><div class="countdown__lbl">روز</div></div>
-          <div class="countdown__cell"><div class="countdown__num" data-cd="h">۱۲</div><div class="countdown__lbl">ساعت</div></div>
-          <div class="countdown__cell"><div class="countdown__num" data-cd="m">۳۰</div><div class="countdown__lbl">دقیقه</div></div>
-          <div class="countdown__cell"><div class="countdown__num" data-cd="s">۴۵</div><div class="countdown__lbl">ثانیه</div></div>
+        <div class="festival__body">
+          <p class="festival__tag">SEASONAL FESTIVAL</p>
+          <h3 class="festival__title">جشنواره فصلی پارسی‌مزون<br /><i>گرمای زمستان، ظرافت مینیمال</i></h3>
+          <p class="festival__sub">منتخبی از پالتوها، بافت‌ها و اکسسوری‌های کالکشن زمستان با تخفیف ویژه؛ همان استایل ادیتوریال با قیمتی دوست‌داشتنی‌تر.</p>
+          <div class="festival__count" id="countdown" aria-label="زمان باقی‌مانده جشنواره">
+            <div class="countdown__cell"><div class="countdown__num" data-cd="d">۰۲</div><div class="countdown__lbl">روز</div></div>
+            <div class="countdown__cell"><div class="countdown__num" data-cd="h">۱۲</div><div class="countdown__lbl">ساعت</div></div>
+            <div class="countdown__cell"><div class="countdown__num" data-cd="m">۳۰</div><div class="countdown__lbl">دقیقه</div></div>
+            <div class="countdown__cell"><div class="countdown__num" data-cd="s">۴۵</div><div class="countdown__lbl">ثانیه</div></div>
+          </div>
+          <div class="festival__cta">
+            <a class="btn btn-dark2" href={`${BASE}/sale`}>مشاهده تخفیف‌ها</a>
+            <a class="btn btn-sand" href={`${BASE}/collection/winter`}>کالکشن زمستان</a>
+          </div>
         </div>
       </div>
     </div>
@@ -130,7 +141,7 @@ const sideArticles = articles.slice(3, 5);
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><small>BEST SELLERS</small>محبوب‌ترین‌های مشتریان</h2>
-        <a class="section-link" href={`${BASE}/shop?sort=pop`}>مشاهده همه ←</a>
+        <a class="section-link" href={`${BASE}/bestsellers`}>مشاهده همه ←</a>
       </div>
       <div class="product-grid product-grid--scroll">
         {best.map((p: any) => <ProductCard p={p} />)}
@@ -166,7 +177,7 @@ const sideArticles = articles.slice(3, 5);
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><small>SALE</small>پیشنهادهای ویژه</h2>
-        <a class="section-link" href={`${BASE}/shop?sale=1`}>همه تخفیف‌ها ←</a>
+        <a class="section-link" href={`${BASE}/sale`}>همه تخفیف‌ها ←</a>
       </div>
       <div class="product-grid">
         {sale.map((p: any) => <ProductCard p={p} />)}
